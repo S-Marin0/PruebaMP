@@ -1,0 +1,182 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+header {
+    background: #333;
+    color: #fff;
+    padding: 1rem 0;
+    border-bottom: #0779e4 3px solid;
+}
+
+header h1 {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+header a {
+    color: #fff;
+    text-decoration: none;
+}
+
+
+nav {
+    background: #444;
+    color: #fff;
+    padding: 0.5rem 0;
+}
+
+nav ul {
+    padding: 0;
+    list-style: none;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+}
+nav a:hover {
+    color: #0779e4;
+}
+
+
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    background: #333;
+    color: #fff;
+}
+
+/* Formularios */
+form div {
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="datetime-local"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box; /* Importante para que padding no afecte el width total */
+}
+
+button[type="submit"], .button {
+    background: #337ab7;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+button[type="submit"]:hover, .button:hover {
+    background: #286090;
+}
+
+/* Mensajes */
+.message {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+.success {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border: 1px solid #d6e9c6;
+}
+.error {
+    background-color: #f2dede;
+    color: #a94442;
+    border: 1px solid #ebccd1;
+}
+.warning {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+    border: 1px solid #faebcc;
+}
+
+
+/* Lista de Eventos */
+.event-list .event-item, .event-list .event-item-simple {
+    background: #fff;
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 4px;
+}
+.event-item-simple h3 {
+    margin-top: 0;
+}
+
+.event-item h3 {
+    margin-top: 0;
+    color: #337ab7;
+}
+
+/* Detalle Evento */
+.estado-publicado { color: green; font-weight: bold;}
+.estado-borrador { color: gray; font-weight: bold;}
+.estado-en.curso { color: orange; font-weight: bold;} /* CSS no le gusta el espacio, simplificar nombre estado */
+.estado-finalizado { color: navy; font-weight: bold;}
+.estado-cancelado { color: red; font-weight: bold;}
+
+
+/* Compra Item */
+.compra-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+.compra-item h4 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+}

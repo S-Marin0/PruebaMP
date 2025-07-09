@@ -1,64 +1,169 @@
 package com.eventmaster.service;
 
+import com.eventmaster.dao.EventoDAO;
+import com.eventmaster.dao.TipoEntradaDAO;
 import com.eventmaster.model.entity.Evento;
-import java.util.ArrayList;
+import com.eventmaster.model.entity.Lugar;
+import com.eventmaster.model.entity.Organizador;
+import com.eventmaster.model.pattern.factory.TipoEntrada; // Definición del tipo de entrada
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
-// Servicio placeholder para gestionar eventos (ej. persistencia, notificaciones complejas)
-// En una aplicación real, esto interactuaría con una capa DAO y posiblemente otros servicios.
 public class EventoService {
 
-    private static List<Evento> repositorioDeEventos = new ArrayList<>(); // Simulación de un repositorio en memoria
+    private final EventoDAO eventoDAO;
+    private final TipoEntradaDAO tipoEntradaDAO; // Para gestionar las definiciones de TipoEntrada asociadas
 
-    public EventoService() {
-        // Constructor
+    public EventoService(EventoDAO eventoDAO, TipoEntradaDAO tipoEntradaDAO) {
+        this.eventoDAO = eventoDAO;
+        this.tipoEntradaDAO = tipoEntradaDAO;
     }
 
-    public void registrarNuevoEvento(Evento evento) {
-        if (evento != null && !repositorioDeEventos.stream().anyMatch(e -> e.getId().equals(evento.getId()))) {
-            repositorioDeEventos.add(evento);
-            System.out.println("EventoService: Evento '" + evento.getNombre() + "' registrado en el sistema.");
-            // Aquí podría ir lógica de notificación a un sistema de búsqueda, administradores, etc.
-        } else if (evento != null) {
-            System.out.println("EventoService: Evento '" + evento.getNombre() + "' ya estaba registrado o es nulo.");
+    public Evento registrarNuevoEvento(Evento evento) {
+        if (evento == null) {
+            throw new IllegalArgumentException("El evento no puede ser nulo.");
         }
+        // Aquí se podrían añadir validaciones de negocio antes de guardar
+        Evento eventoGuardado = eventoDAO.save(evento);
+        System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' registrado en el sistema con ID: " + eventoGuardado.getId());
+
+        // Guardar las definiciones de TipoEntrada asociadas al evento
+        if (evento.getTiposEntradaDisponibles() != null) {
+            for (Map.Entry<String, TipoEntrada> entry : evento.getTiposEntradaDisponibles().entrySet()) {
+                tipoEntradaDAO.save(eventoGuardado.getId(), entry.getValue());
+            }
+            System.out.println("EventoService: Tipos de entrada para '" + eventoGuardado.getNombre() + "' guardados.");
+        }
+        return eventoGuardado;
     }
 
     public void eliminarEventoRegistrado(Evento evento) {
-        if (evento != null) {
-            boolean removed = repositorioDeEventos.removeIf(e -> e.getId().equals(evento.getId()));
-            if (removed) {
-                System.out.println("EventoService: Evento '" + evento.getNombre() + "' eliminado del sistema.");
-            } else {
-                System.out.println("EventoService: No se encontró el evento '" + evento.getNombre() + "' para eliminar.");
+        if (evento != null && evento.getId() != null) {
+            // Eliminar primero las definiciones de TipoEntrada asociadas (dependencia)
+            // O la BBDD podría tener ON DELETE CASCADE
+            List<TipoEntrada> tipos = tipoEntradaDAO.findAllByEventoId(evento.getId());
+            for(TipoEntrada te : tipos) {
+                // Asumiendo que TipoEntrada (definición) no tiene un ID global propio en el modelo actual,
+                // lo eliminamos por eventoId y nombreTipo. Si tuviera ID global, sería por ese ID.
+                tipoEntradaDAO.deleteByEventoIdAndNombreTipo(evento.getId(), te.getNombreTipo());
             }
+            eventoDAO.deleteById(evento.getId());
+            System.out.println("EventoService: Evento '" + evento.getNombre() + "' y sus tipos de entrada eliminados del sistema.");
+        } else {
+            System.out.println("EventoService: Evento nulo o sin ID, no se puede eliminar.");
         }
     }
 
     public Optional<Evento> findEventoById(String id) {
-        return repositorioDeEventos.stream().filter(e -> e.getId().equals(id)).findFirst();
+        Optional<Evento> eventoOpt = eventoDAO.findById(id);
+        eventoOpt.ifPresent(this::cargarTiposDeEntradaParaEvento);
+        return eventoOpt;
     }
 
     public List<Evento> getAllEventos() {
-        return new ArrayList<>(repositorioDeEventos); // Devuelve una copia para evitar modificaciones externas
+        List<Evento> eventos = eventoDAO.findAll();
+        eventos.forEach(this::cargarTiposDeEntradaParaEvento);
+        return eventos;
     }
 
-    public void actualizarEvento(Evento eventoActualizado) {
-        Optional<Evento> eventoOpt = findEventoById(eventoActualizado.getId());
-        if (eventoOpt.isPresent()) {
-            Evento eventoExistente = eventoOpt.get();
-            // Remover el viejo y añadir el actualizado (simplista, en un ORM sería un update)
-            repositorioDeEventos.remove(eventoExistente);
-            repositorioDeEventos.add(eventoActualizado);
-            System.out.println("EventoService: Evento '" + eventoActualizado.getNombre() + "' actualizado.");
-        } else {
-            System.out.println("EventoService: No se pudo actualizar, evento '" + eventoActualizado.getNombre() + "' no encontrado.");
+    public Evento actualizarEvento(Evento eventoActualizado) {
+        if (eventoActualizado == null || eventoActualizado.getId() == null) {
+            throw new IllegalArgumentException("Evento a actualizar no puede ser nulo o no tener ID.");
+        }
+        // Guardar el evento principal
+        Evento eventoGuardado = eventoDAO.save(eventoActualizado);
+
+        // Actualizar/guardar las definiciones de TipoEntrada asociadas
+        // Esto podría ser complejo: ¿qué pasa si se eliminan tipos de entrada, se añaden nuevos, o se modifican existentes?
+        // Una estrategia simple es eliminar los viejos y guardar los nuevos.
+        // O una lógica más fina de comparación.
+        // Por ahora, asumimos que el mapa en eventoActualizado.getTiposEntradaDisponibles() es la verdad actual.
+        // Primero, podríamos eliminar todos los TipoEntrada existentes para este eventoId (si la interfaz lo permite fácilmente)
+        // o cargarlos y compararlos.
+        // Para la simulación, vamos a guardar/actualizar cada uno.
+        if (eventoGuardado.getTiposEntradaDisponibles() != null) {
+            for (Map.Entry<String, TipoEntrada> entry : eventoGuardado.getTiposEntradaDisponibles().entrySet()) {
+                tipoEntradaDAO.save(eventoGuardado.getId(), entry.getValue());
+            }
+        }
+        System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' y sus tipos de entrada actualizados.");
+        return eventoGuardado;
+    }
+
+    // Método para cargar las definiciones de TipoEntrada en un objeto Evento
+    private void cargarTiposDeEntradaParaEvento(Evento evento) {
+        if (evento != null && evento.getId() != null) {
+            List<TipoEntrada> tipos = tipoEntradaDAO.findAllByEventoId(evento.getId());
+            // Limpiar el mapa existente y rellenarlo, o la implementación de Evento.addTipoEntrada se encarga.
+            // evento.getTiposEntradaDisponibles().clear(); // Si queremos reemplazar siempre.
+            for (TipoEntrada te : tipos) {
+                evento.agregarTipoEntrada(te.getNombreTipo(), te);
+            }
         }
     }
 
-    // Otros métodos que podrían ser útiles:
-    // buscarEventosPorCriterio(Filtro filtro)
-    // obtenerEventosPorOrganizador(Organizador organizador)
-    // obtenerEventosPorLugar(Lugar lugar)
+    // Métodos de búsqueda delegados al DAO (y luego cargan tipos de entrada)
+    public List<Evento> findEventosPorNombre(String nombre) {
+        List<Evento> eventos = eventoDAO.findByNombreContaining(nombre);
+        eventos.forEach(this::cargarTiposDeEntradaParaEvento);
+        return eventos;
+    }
+
+    public List<Evento> findEventosPorCategoria(String categoria) {
+        List<Evento> eventos = eventoDAO.findByCategoria(categoria);
+        eventos.forEach(this::cargarTiposDeEntradaParaEvento);
+        return eventos;
+    }
+
+    public List<Evento> findEventosPorOrganizador(Organizador organizador) {
+        List<Evento> eventos = eventoDAO.findByOrganizador(organizador);
+        eventos.forEach(this::cargarTiposDeEntradaParaEvento);
+        return eventos;
+    }
+
+    public List<Evento> findEventosPublicadosYFuturos() {
+        // Combinar lógica o añadir un método específico al DAO si es una consulta común
+        LocalDateTime ahora = LocalDateTime.now();
+        List<Evento> eventos = eventoDAO.findAll().stream()
+            .filter(e -> e.getFechaHora() != null && e.getFechaHora().isAfter(ahora) &&
+                         e.getEstadoActual() != null && "Publicado".equalsIgnoreCase(e.getEstadoActual().getNombreEstado()))
+            .collect(Collectors.toList());
+        eventos.forEach(this::cargarTiposDeEntradaParaEvento);
+        return eventos;
+    }
+
+    /**
+     * Vende un número de entradas para un tipo específico de un evento.
+     * Esta lógica ahora reside principalmente en el Evento y su TipoEntrada,
+     * pero el servicio puede orquestar la persistencia del cambio.
+     * @return true si la venta fue exitosa y se persistió, false en caso contrario.
+     */
+    public boolean procesarVentaEntradas(String eventoId, String nombreTipoEntrada, int cantidad) {
+        Optional<Evento> eventoOpt = findEventoById(eventoId); // Esto ya carga los tipos de entrada
+        if (eventoOpt.isPresent()) {
+            Evento evento = eventoOpt.get();
+            boolean ventaExitosaEnModelo = evento.venderEntradas(nombreTipoEntrada, cantidad); // Lógica en el modelo
+
+            if (ventaExitosaEnModelo) {
+                // Persistir los cambios en el Evento (entradasVendidas)
+                eventoDAO.save(evento);
+                // Persistir los cambios en TipoEntrada (cantidadDisponible)
+                TipoEntrada tipoEntradaAfectado = evento.getTipoEntrada(nombreTipoEntrada);
+                if (tipoEntradaAfectado != null) {
+                    tipoEntradaDAO.save(eventoId, tipoEntradaAfectado); // El save actualiza si ya existe
+                    // O un método más específico: tipoEntradaDAO.actualizarCantidadDisponible(eventoId, nombreTipoEntrada, tipoEntradaAfectado.getCantidadDisponible());
+                }
+                System.out.println("EventoService: Venta procesada y persistida para evento " + evento.getNombre());
+                return true;
+            } else {
+                System.out.println("EventoService: Venta fallida en el modelo para evento " + evento.getNombre());
+                return false;
+            }
+        }
+        System.out.println("EventoService: Evento no encontrado para procesar venta, ID: " + eventoId);
+        return false;
+    }
 }
