@@ -56,6 +56,42 @@
                         <input type="number" id="capacidad" name="capacidad" value="${not empty param.capacidad ? param.capacidad : evento.capacidadTotal}" min="1" required>
                     </div>
 
+                    <hr/>
+                    <h4>Tipos de Entrada (hasta 3)</h4>
+                    <c:forEach var="i" begin="1" end="3">
+                        <h5>Tipo de Entrada ${i}
+                            <c:if test="${i > 1 && empty tipoEntrada_[i].nombreTipo && (empty param['tipoEntradaNombre_'.concat(i)] || param['tipoEntradaNombre_'.concat(i)] == '')}">(Opcional)</c:if>
+                            <c:if test="${i == 1}">(Obligatorio)</c:if>
+                        </h5>
+                        <div>
+                            <label for="tipoEntradaNombre_${i}">Nombre del Tipo de Entrada ${i}:</label>
+                            <input type="text" id="tipoEntradaNombre_${i}" name="tipoEntradaNombre_${i}"
+                                   value="<c:out value="${not empty param['tipoEntradaNombre_'.concat(i)] ? param['tipoEntradaNombre_'.concat(i)] : tipoEntrada_[i].nombreTipo}"/>"
+                                   <c:if test="${i == 1}">required</c:if>>
+                        </div>
+                        <div>
+                            <label for="tipoEntradaPrecioBase_${i}">Precio Base ${i} (€):</label>
+                            <input type="number" id="tipoEntradaPrecioBase_${i}" name="tipoEntradaPrecioBase_${i}"
+                                   value="${not empty param['tipoEntradaPrecioBase_'.concat(i)] ? param['tipoEntradaPrecioBase_'.concat(i)] : tipoEntrada_[i].precioBase}"
+                                   step="0.01" min="0" <c:if test="${i == 1}">required</c:if>>
+                        </div>
+                        <div>
+                            <label for="tipoEntradaCantidadTotal_${i}">Cantidad Disponible Tipo ${i}:</label>
+                            <input type="number" id="tipoEntradaCantidadTotal_${i}" name="tipoEntradaCantidadTotal_${i}"
+                                   value="${not empty param['tipoEntradaCantidadTotal_'.concat(i)] ? param['tipoEntradaCantidadTotal_'.concat(i)] : tipoEntrada_[i].cantidadTotal}"
+                                   min="0" <c:if test="${i == 1}">required</c:if>>
+                                   <c:if test="${not empty tipoEntrada_[i]}"><small>(Vendidas: ${tipoEntrada_[i].cantidadTotal - tipoEntrada_[i].cantidadDisponible})</small></c:if>
+                        </div>
+                         <div>
+                            <label for="tipoEntradaLimiteCompra_${i}">Límite Compra Usuario Tipo ${i}:</label>
+                            <input type="number" id="tipoEntradaLimiteCompra_${i}" name="tipoEntradaLimiteCompra_${i}"
+                                   value="${not empty param['tipoEntradaLimiteCompra_'.concat(i)] ? param['tipoEntradaLimiteCompra_'.concat(i)] : tipoEntrada_[i].limiteCompraPorUsuario}"
+                                   min="0" <c:if test="${i == 1}">required</c:if>>
+                        </div>
+                        <c:if test="${i < 3}"><br/></c:if>
+                    </c:forEach>
+                    <hr/>
+
                     <div>
                         <button type="submit">Guardar Cambios</button>
                         <a href="${pageContext.request.contextPath}/evento/detalle?id=${evento.id}" class="button secondary">Cancelar</a>
