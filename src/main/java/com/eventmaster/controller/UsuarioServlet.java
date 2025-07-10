@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @WebServlet(name = "UsuarioServlet", urlPatterns = {"/usuario/*"})
 public class UsuarioServlet extends HttpServlet {
@@ -71,7 +72,7 @@ public class UsuarioServlet extends HttpServlet {
         } catch (Exception e) {
             System.err.println("UsuarioServlet: Error en doGet - " + e.getMessage());
             request.setAttribute("errorGeneral", "Error procesando la solicitud de usuario: " + e.getMessage());
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/error.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
             dispatcher.forward(request, response);
         }
     }
@@ -110,9 +111,9 @@ public class UsuarioServlet extends HttpServlet {
             request.setAttribute("errorGeneral", "Error al procesar la acción de usuario: " + e.getMessage());
             // Reenviar al formulario relevante con el mensaje de error
             // Esto es simplificado, idealmente se redirige al form específico
-            String formOrigen = "/WEB-INF/jsp/usuario/login.jsp"; // Default
-            if ("/registro/asistente".equals(action)) formOrigen = "/WEB-INF/jsp/usuario/registroAsistente.jsp";
-            if ("/registro/organizador".equals(action)) formOrigen = "/WEB-INF/jsp/usuario/registroOrganizador.jsp";
+            String formOrigen = "/jsp/usuario/login.jsp"; // Default
+            if ("/registro/asistente".equals(action)) formOrigen = "/jsp/usuario/registroAsistente.jsp";
+            if ("/registro/organizador".equals(action)) formOrigen = "/jsp/usuario/registroOrganizador.jsp";
             RequestDispatcher dispatcher = request.getRequestDispatcher(formOrigen);
             dispatcher.forward(request, response);
         }
@@ -120,27 +121,27 @@ public class UsuarioServlet extends HttpServlet {
 
     private void mostrarFormularioLogin(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/login.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/login.jsp");
         dispatcher.forward(request, response);
     }
 
     private void mostrarPaginaDeOpcionesRegistro(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Una JSP simple que ofrece link a registro de asistente u organizador
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/opcionesRegistro.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/opcionesRegistro.jsp");
         dispatcher.forward(request, response);
     }
 
 
     private void mostrarFormularioRegistroAsistente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/registroAsistente.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/registroAsistente.jsp");
         dispatcher.forward(request, response);
     }
 
     private void mostrarFormularioRegistroOrganizador(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/registroOrganizador.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/registroOrganizador.jsp");
         dispatcher.forward(request, response);
     }
 
@@ -280,14 +281,14 @@ public class UsuarioServlet extends HttpServlet {
         if (usuarioActualizado instanceof Asistente) {
             // Asistente asistente = (Asistente) usuarioActualizado;
             // El historial de compras ya se carga en findUsuarioById dentro de UsuarioService
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/perfilAsistente.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/perfilAsistente.jsp");
             dispatcher.forward(request, response);
         } else if (usuarioActualizado instanceof Organizador) {
             // Organizador organizador = (Organizador) usuarioActualizado;
             // Cargar eventos creados por el organizador
             // List<Evento> eventosCreados = eventoService.findEventosPorOrganizador(organizador);
             // request.setAttribute("eventosCreados", eventosCreados);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/usuario/perfilOrganizador.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/usuario/perfilOrganizador.jsp");
             dispatcher.forward(request, response);
         } else {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Tipo de usuario desconocido para perfil.");
