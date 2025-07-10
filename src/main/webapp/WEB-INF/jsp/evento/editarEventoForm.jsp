@@ -88,6 +88,29 @@
                                    value="${not empty param['tipoEntradaLimiteCompra_'.concat(i)] ? param['tipoEntradaLimiteCompra_'.concat(i)] : tipoEntrada_[i].limiteCompraPorUsuario}"
                                    min="0" <c:if test="${i == 1}">required</c:if>>
                         </div>
+                        <div>
+                            <c:set var="currentTipoEntrada" value="${tipoEntrada_[i]}" />
+                            <input type="checkbox" id="ofreceMercanciaOpcional_${i}" name="ofreceMercanciaOpcional_${i}" value="true"
+                                   ${not empty param['ofreceMercanciaOpcional_'.concat(i)] ? (param['ofreceMercanciaOpcional_'.concat(i)] == 'true' ? 'checked' : '') : (currentTipoEntrada.ofreceMercanciaOpcional ? 'checked' : '')}>
+                            <label for="ofreceMercanciaOpcional_${i}">Ofrecer Mercancía Opcional</label><br/>
+                            <label for="descripcionMercancia_${i}">Descripción Mercancía Tipo ${i}:</label>
+                            <input type="text" id="descripcionMercancia_${i}" name="descripcionMercancia_${i}"
+                                   value="<c:out value="${not empty param['descripcionMercancia_'.concat(i)] ? param['descripcionMercancia_'.concat(i)] : currentTipoEntrada.descripcionMercancia}"/>"><br/>
+                            <label for="precioAdicionalMercancia_${i}">Precio Adicional Mercancía Tipo ${i} (€):</label>
+                            <input type="number" id="precioAdicionalMercancia_${i}" name="precioAdicionalMercancia_${i}"
+                                   value="${not empty param['precioAdicionalMercancia_'.concat(i)] ? param['precioAdicionalMercancia_'.concat(i)] : currentTipoEntrada.precioAdicionalMercancia}" step="0.01" min="0">
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ofreceDescuentoOpcional_${i}" name="ofreceDescuentoOpcional_${i}" value="true"
+                                   ${not empty param['ofreceDescuentoOpcional_'.concat(i)] ? (param['ofreceDescuentoOpcional_'.concat(i)] == 'true' ? 'checked' : '') : (currentTipoEntrada.ofreceDescuentoOpcional ? 'checked' : '')}>
+                            <label for="ofreceDescuentoOpcional_${i}">Ofrecer Descuento Opcional</label><br/>
+                            <label for="descripcionDescuento_${i}">Descripción Descuento Tipo ${i}:</label>
+                            <input type="text" id="descripcionDescuento_${i}" name="descripcionDescuento_${i}"
+                                   value="<c:out value="${not empty param['descripcionDescuento_'.concat(i)] ? param['descripcionDescuento_'.concat(i)] : currentTipoEntrada.descripcionDescuento}"/>"><br/>
+                            <label for="montoDescuentoFijo_${i}">Monto Descuento Fijo Tipo ${i} (€):</label>
+                            <input type="number" id="montoDescuentoFijo_${i}" name="montoDescuentoFijo_${i}"
+                                   value="${not empty param['montoDescuentoFijo_'.concat(i)] ? param['montoDescuentoFijo_'.concat(i)] : currentTipoEntrada.montoDescuentoFijo}" step="0.01" min="0">
+                        </div>
                         <c:if test="${i < 3}"><br/></c:if>
                     </c:forEach>
                     <hr/>

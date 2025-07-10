@@ -91,19 +91,47 @@
                         --%>
                         <br/>
                         <label for="tipoEntradaNombre">Seleccionar Tipo de Entrada:</label>
-                        <select name="tipoEntradaNombre" id="tipoEntradaNombre">
+                        <select name="tipoEntradaNombre" id="tipoEntradaNombre" onchange="actualizarOpcionesDecoradorYPrecio()">
+                            <option value="">-- Seleccione un tipo de entrada --</option>
                             <c:forEach var="entry" items="${evento.tiposEntradaDisponibles}">
                                 <c:if test="${entry.value.cantidadDisponible > 0}">
-                                   <option value="${entry.value.nombreTipo}">${entry.value.nombreTipo} (<fmt:formatNumber value="${entry.value.precioBase}" type="currency" currencySymbol="€" />)</option>
+                                   <c:set var="te" value="${entry.value}" />
+                                   <option value="${te.nombreTipo}"
+                                           data-precio-base="${te.precioBase}"
+                                           data-ofrece-mercancia="${te.ofreceMercanciaOpcional}"
+                                           data-desc-mercancia="${te.descripcionMercancia}"
+                                           data-precio-mercancia="${te.precioAdicionalMercancia}"
+                                           data-ofrece-descuento="${te.ofreceDescuentoOpcional}"
+                                           data-desc-descuento="${te.descripcionDescuento}"
+                                           data-monto-descuento="${te.montoDescuentoFijo}">
+                                       ${te.nombreTipo} (<fmt:formatNumber value="${te.precioBase}" type="currency" currencySymbol="€" />)
+                                   </option>
                                 </c:if>
                             </c:forEach>
                         </select>
                         <br/>
-                        <label for="cantidad">Cantidad:</label>
-                        <input type="number" name="cantidad" value="1" min="1" required>
+
+                        <%-- Contenedores para opciones de decorador (inicialmente ocultos) --%>
+                        <div id="opcionMercanciaDiv" style="display:none; margin-top:10px;">
+                            <input type="checkbox" id="checkMercancia" name="decorador_mercancia" value="true" onchange="actualizarOpcionesDecoradorYPrecio()">
+                            <label for="checkMercancia" id="labelMercancia"></label>
+                        </div>
+
+                        <div id="opcionDescuentoDiv" style="display:none; margin-top:10px;">
+                            <input type="checkbox" id="checkDescuento" name="decorador_descuento" value="true" onchange="actualizarOpcionesDecoradorYPrecio()">
+                            <label for="checkDescuento" id="labelDescuento"></label>
+                        </div>
                         <br/>
+
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="number" name="cantidad" id="cantidad" value="1" min="1" required onchange="actualizarOpcionesDecoradorYPrecio()">
+                        <br/>
+
+                        <h4>Precio Total Estimado: <span id="precioTotalEstimado">€0.00</span></h4>
+                        <br/>
+
                         <c:if test="${esAsistente}">
-                             <button type="submit">Comprar Entradas Seleccionadas</button>
+                             <button type="submit" id="botonComprar">Comprar Entradas Seleccionadas</button>
                         </c:if>
                          <c:if test="${empty sessionScope.usuarioLogueado}">
                              <p><a href="${pageContext.request.contextPath}/usuario/login?redirect=${pageContext.request.contextPath}/evento/detalle?id=${evento.id}">Inicie sesión para comprar</a></p>
@@ -182,5 +210,81 @@
     </div>
 
     <jsp:include page="/jsp/common/footer.jsp" />
+
+    <script>
+        function actualizarOpcionesDecoradorYPrecio() {
+            const tipoEntradaSelect = document.getElementById('tipoEntradaNombre');
+            const selectedOption = tipoEntradaSelect.options[tipoEntradaSelect.selectedIndex];
+            const cantidadInput = document.getElementById('cantidad');
+            const cantidad = parseInt(cantidadInput.value) || 0;
+
+            const opcionMercanciaDiv = document.getElementById('opcionMercanciaDiv');
+            const checkMercancia = document.getElementById('checkMercancia');
+            const labelMercancia = document.getElementById('labelMercancia');
+
+            const opcionDescuentoDiv = document.getElementById('opcionDescuentoDiv');
+            const checkDescuento = document.getElementById('checkDescuento');
+            const labelDescuento = document.getElementById('labelDescuento');
+
+            const precioTotalEstimadoSpan = document.getElementById('precioTotalEstimado');
+            const botonComprar = document.getElementById('botonComprar');
+
+            if (!selectedOption || selectedOption.value === "") {
+                opcionMercanciaDiv.style.display = 'none';
+                checkMercancia.checked = false;
+                opcionDescuentoDiv.style.display = 'none';
+                checkDescuento.checked = false;
+                precioTotalEstimadoSpan.textContent = '€0.00';
+                if (botonComprar) botonComprar.disabled = true;
+                return;
+            }
+            if (botonComprar) botonComprar.disabled = false;
+
+
+            const precioBase = parseFloat(selectedOption.dataset.precioBase) || 0;
+            const ofreceMercancia = selectedOption.dataset.ofreceMercancia === 'true';
+            const descMercancia = selectedOption.dataset.descMercancia || 'Mercancía Adicional';
+            const precioMercancia = parseFloat(selectedOption.dataset.precioMercancia) || 0;
+            const ofreceDescuento = selectedOption.dataset.ofreceDescuento === 'true';
+            const descDescuento = selectedOption.dataset.descDescuento || 'Descuento Aplicado';
+            const montoDescuento = parseFloat(selectedOption.dataset.montoDescuento) || 0;
+
+            let precioCalculado = precioBase;
+
+            if (ofreceMercancia && precioMercancia > 0) {
+                opcionMercanciaDiv.style.display = 'block';
+                labelMercancia.textContent = `${descMercancia} (+€${precioMercancia.toFixed(2)})`;
+                if (checkMercancia.checked) {
+                    precioCalculado += precioMercancia;
+                }
+            } else {
+                opcionMercanciaDiv.style.display = 'none';
+                checkMercancia.checked = false;
+            }
+
+            if (ofreceDescuento && montoDescuento > 0) {
+                opcionDescuentoDiv.style.display = 'block';
+                labelDescuento.textContent = `${descDescuento} (-€${montoDescuento.toFixed(2)})`;
+                if (checkDescuento.checked) {
+                    precioCalculado -= montoDescuento;
+                }
+            } else {
+                opcionDescuentoDiv.style.display = 'none';
+                checkDescuento.checked = false;
+            }
+
+            if (precioCalculado < 0) { // Un descuento no debería hacer el precio negativo
+                precioCalculado = 0;
+            }
+
+            const precioTotal = precioCalculado * cantidad;
+            precioTotalEstimadoSpan.textContent = `€${precioTotal.toFixed(2)}`;
+        }
+
+        // Llamar una vez al cargar la página para inicializar (en caso de que haya algo preseleccionado o para deshabilitar botón)
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarOpcionesDecoradorYPrecio();
+        });
+    </script>
 </body>
 </html>

@@ -47,10 +47,21 @@ public class ProcesoCompraFacade {
      * @param cantidad La cantidad de entradas.
      * @param detallesPago Detalles para el procesamiento del pago (ej. número de tarjeta, etc.).
      * @param codigoDescuento Opcional, un código de descuento a aplicar.
+     * @param aplicarMercancia Booleano que indica si se seleccionó la opción de mercancía.
+     * @param aplicarDescuento Booleano que indica si se seleccionó la opción de descuento.
      * @return Un objeto Compra si el proceso es exitoso, null en caso contrario.
      */
-    public Compra ejecutarProcesoCompra(Usuario usuario, String eventoId, String tipoEntradaNombre, int cantidad, Map<String, Object> detallesPago, String codigoDescuento) {
+    public Compra ejecutarProcesoCompra(Usuario usuario,
+                                      String eventoId,
+                                      String tipoEntradaNombre,
+                                      int cantidad,
+                                      Map<String, Object> detallesPago,
+                                      String codigoDescuento,
+                                      boolean aplicarMercancia,
+                                      boolean aplicarDescuento) {
         System.out.println("\n--- Iniciando Proceso de Compra (Facade) ---");
+        System.out.println("Aplicar Mercancia: " + aplicarMercancia + ", Aplicar Descuento: " + aplicarDescuento);
+
         Evento evento = eventoService.findEventoById(eventoId)
             .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado con ID: " + eventoId));
 
@@ -63,29 +74,46 @@ public class ProcesoCompraFacade {
         Compra nuevaCompra = new Compra(UUID.randomUUID().toString(), usuario, evento);
         // nuevaCompra.setCodigoDescuentoIngresado(codigoDescuento); // Si Compra tiene este campo
 
+        // 1.B Calcular Precio Unitario Final con Decoradores (antes de validaciones)
+        double precioUnitarioCalculado = tipoEntradaDef.getPrecioBase();
+        String descripcionEntradaDecorada = tipoEntradaDef.getNombreTipo();
+
+        if (aplicarMercancia && tipoEntradaDef.isOfreceMercanciaOpcional()) {
+            precioUnitarioCalculado += tipoEntradaDef.getPrecioAdicionalMercancia();
+            descripcionEntradaDecorada += " + " + tipoEntradaDef.getDescripcionMercancia();
+             System.out.println("ProcesoCompraFacade: Mercancía aplicada. Nuevo precio unitario: " + precioUnitarioCalculado);
+        }
+        if (aplicarDescuento && tipoEntradaDef.isOfreceDescuentoOpcional()) {
+            // Aquí se podría añadir lógica para verificar límites de uso del descuento si existieran
+            precioUnitarioCalculado -= tipoEntradaDef.getMontoDescuentoFijo();
+            descripcionEntradaDecorada += " (Descuento: " + tipoEntradaDef.getDescripcionDescuento() + " aplicado)";
+            System.out.println("ProcesoCompraFacade: Descuento aplicado. Nuevo precio unitario: " + precioUnitarioCalculado);
+        }
+        if (precioUnitarioCalculado < 0) {
+            precioUnitarioCalculado = 0; // El precio no puede ser negativo
+        }
+
+        double totalAPagar = precioUnitarioCalculado * cantidad;
+        nuevaCompra.setTotalPagado(totalAPagar); // Establecer el total calculado con decoradores
+        System.out.println("ProcesoCompraFacade: Precio unitario final con decoradores: " + precioUnitarioCalculado + ", Total a pagar: " + totalAPagar);
+
         // 2. Ejecutar Cadena de Validación
+        // La cadena de validación podría necesitar el precio final si alguna validación depende de él.
         if (!cadenaValidacion.validar(usuario, evento, tipoEntradaDef, cantidad, nuevaCompra)) {
-            System.err.println("ProcesoCompraFacade: Validación fallida. Motivo: " + nuevaCompra.getEstadoCompra()); // Asumiendo que el estado de compra refleja el error
+            System.err.println("ProcesoCompraFacade: Validación fallida. Motivo: " + nuevaCompra.getEstadoCompra());
             return null;
         }
         System.out.println("ProcesoCompraFacade: Validaciones superadas.");
 
-        // 3. Calcular Precio Total (podría estar dentro de la validación de promoción o aquí)
-        double precioUnitario = tipoEntradaDef.getPrecioBase();
-        // Aquí se aplicarían descuentos de `nuevaCompra` si la cadena de validación los modificó.
-        // double precioFinalUnitario = aplicarDescuentosSiExisten(precioUnitario, nuevaCompra);
-        double precioFinalUnitario = precioUnitario; // Simplificado por ahora
-        double totalAPagar = precioFinalUnitario * cantidad;
-        nuevaCompra.setTotalPagado(totalAPagar); // Provisional, se confirma después del pago
+        // Si la cadena de validación aplicara promociones que alteran el total, se recalcularía aquí.
+        // totalAPagar = nuevaCompra.getTotalPagado(); // Actualizar si la cadena lo modificó.
 
-        System.out.println("ProcesoCompraFacade: Precio total calculado: " + totalAPagar);
-
-        // 4. Procesar Pago
+        // 3. Procesar Pago
         String idTransaccionApp = UUID.randomUUID().toString(); // ID único para esta operación de compra en nuestra app
         ProcesadorPago.ResultadoPago resultadoPago = procesadorPago.procesarPago(usuario, totalAPagar, detallesPago, idTransaccionApp);
         boolean pagoExitoso = resultadoPago.isExito();
 
-        if(pagoExitoso && resultadoPago.getIdTransaccionPasarela() != null) { // GUARDAR ID DE TRANSACCIÓN DE PASARELA
+        if(pagoExitoso && resultadoPago.getIdTransaccionPasarela() != null) {
             nuevaCompra.setIdTransaccionPasarela(resultadoPago.getIdTransaccionPasarela());
             System.out.println("ProcesoCompraFacade: ID de transacción de pasarela ("+ resultadoPago.getIdTransaccionPasarela() +") guardado en la compra.");
         }
@@ -93,13 +121,12 @@ public class ProcesoCompraFacade {
         if (!pagoExitoso) {
             System.err.println("ProcesoCompraFacade: Fallo en el procesamiento del pago. Motivo: " + resultadoPago.getMensaje());
             nuevaCompra.setEstadoCompra("PAGO_FALLIDO");
-            // Considerar si se debe notificar al usuario aquí
             return null;
         }
         System.out.println("ProcesoCompraFacade: Pago procesado exitosamente.");
-        nuevaCompra.setEstadoCompra("PAGADA_PENDIENTE_CONFIRMACION"); // Estado intermedio
+        nuevaCompra.setEstadoCompra("PAGADA_PENDIENTE_CONFIRMACION");
 
-        // 5. Generar Entradas (instancias) y actualizar disponibilidad
+        // 4. Generar Entradas (instancias) y actualizar disponibilidad
         TipoEntradaFactory entradaFactory = entradaFactories.get(tipoEntradaDef.getNombreTipo());
         if (entradaFactory == null) {
             // Usar una fábrica por defecto o lanzar error
@@ -116,13 +143,41 @@ public class ProcesoCompraFacade {
             if (tipoEntradaDef.getNombreTipo().toLowerCase().contains("early")) {
                 extrasParaEntrada.put("minutosAnticipacion", 60); // Ejemplo
             }
-            Entrada entrada = entradaFactory.crearEntrada(idUnicoEntrada, tipoEntradaDef, evento, precioFinalUnitario, extrasParaEntrada);
-            // Aquí se podrían aplicar decoradores si es necesario, basados en la compra o promoción
-            // ej. if (nuevaCompra.tieneMerchandising()) entrada = new EntradaConMerchandising(entrada, ...);
-            entradasGeneradas.add(entrada);
-            nuevaCompra.agregarEntrada(entrada);
+            // El precio pasado a la fábrica de EntradaBase debería ser el precio DESPUÉS de decoradores,
+            // o la EntradaBase toma el precio original y los decoradores lo ajustan.
+            // Optaremos por: EntradaBase toma el precio original del TipoEntrada, y los decoradores lo modifican.
+            // El precioFinalUnitario que se usa para la fábrica debe ser el precio base del tipo de entrada.
+            // El precio de la entrada decorada se usará para el total de la compra.
+
+            Entrada entradaBase = entradaFactory.crearEntrada(idUnicoEntrada, tipoEntradaDef, evento, tipoEntradaDef.getPrecioBase(), extrasParaEntrada);
+            Entrada entradaDecorada = entradaBase;
+
+            if (aplicarMercancia && tipoEntradaDef.isOfreceMercanciaOpcional()) {
+                entradaDecorada = new com.eventmaster.model.pattern.decorator.EntradaConMerchandising(
+                    entradaDecorada,
+                    tipoEntradaDef.getDescripcionMercancia(),
+                    tipoEntradaDef.getPrecioAdicionalMercancia()
+                );
+            }
+            if (aplicarDescuento && tipoEntradaDef.isOfreceDescuentoOpcional()) {
+                entradaDecorada = new com.eventmaster.model.pattern.decorator.EntradaConDescuento(
+                    entradaDecorada,
+                    tipoEntradaDef.getDescripcionDescuento(),
+                    tipoEntradaDef.getMontoDescuentoFijo()
+                );
+            }
+
+            // Verificar que el precio de la entrada decorada coincida con el precioUnitarioConDecoradores
+            if (Math.abs(entradaDecorada.getPrecio() - precioUnitarioCalculado) > 0.001) { // Comparación de doubles con tolerancia
+                 System.err.println("ALERTA: Discrepancia de precios. Precio unitario calculado: " + precioUnitarioCalculado +
+                                   ", Precio entrada decorada: " + entradaDecorada.getPrecio());
+                 // Considerar manejo de esta discrepancia, podría ser un error de lógica.
+            }
+
+            entradasGeneradas.add(entradaDecorada);
+            nuevaCompra.agregarEntrada(entradaDecorada);
         }
-        System.out.println("ProcesoCompraFacade: " + cantidad + " entradas generadas.");
+        System.out.println("ProcesoCompraFacade: " + cantidad + " entradas generadas (con decoradores aplicados).");
 
         // Actualizar disponibilidad en el evento y tipo de entrada
         // Esto debería ser una operación atómica o transaccional con el pago.
