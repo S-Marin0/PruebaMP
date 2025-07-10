@@ -284,7 +284,19 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 mostrarFormularioCrearEvento(request, response); // Reenviar al formulario con error
                 return;
             }
-            LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr);
+
+            LocalDateTime fechaHora = null;
+            try {
+                // El input datetime-local envía "yyyy-MM-ddTHH:mm"
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                fechaHora = LocalDateTime.parse(fechaHoraStr, formatter);
+                System.out.println("EventoServlet#procesarCrearEvento: fechaHoraStr parseada a LocalDateTime: " + fechaHora);
+            } catch (DateTimeParseException e) {
+                System.err.println("EventoServlet#procesarCrearEvento: Error al parsear fechaHoraStr '" + fechaHoraStr + "': " + e.getMessage());
+                request.setAttribute("errorCrearEvento", "Formato de Fecha/Hora inválido. Use el selector o formato YYYY-MM-DDTHH:MM.");
+                mostrarFormularioCrearEvento(request, response);
+                return;
+            }
 
             // Simulación de Lugar (en una app real, se obtendría de la BBDD o se crearía)
             // Optional<Lugar> lugarOpt = lugarService.findById(lugarId);
