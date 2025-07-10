@@ -4,7 +4,7 @@
 
 <html>
 <head>
-    <title>Confirmar Compra - EventMaster</title>
+    <title>Mis Entradas - EventMaster</title>
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
@@ -12,67 +12,57 @@
     <jsp:include page="/jsp/common/navigation.jsp" />
 
     <div class="container">
-        <h2>Confirmar Compra</h2>
-
-        <c:if test="${not empty errorCompra}">
-            <p class="message error">${errorCompra}</p>
+        <c:if test="${param.showHeader == null || param.showHeader == 'true'}">
+            <h2>Mis Entradas Compradas</h2>
         </c:if>
+
         <c:if test="${not empty errorGeneral}">
             <p class="message error">${errorGeneral}</p>
         </c:if>
 
-        <c:if test="${empty evento || empty tipoEntradaNombre || empty cantidad || empty precioUnitario}">
-            <p class="message error">No hay información de compra para confirmar. Por favor, seleccione entradas desde la página del evento.</p>
-            <p><a href="${pageContext.request.contextPath}/eventos">Ver eventos</a></p>
-        </c:if>
-
-        <c:if test="${not empty evento && not empty tipoEntradaNombre && not empty cantidad && not empty precioUnitario}">
-            <h3>Resumen del Pedido:</h3>
-            <p><strong>Evento:</strong> ${evento.nombre}</p>
-            <p><strong>Fecha:</strong> <fmt:formatDate value="${evento.fechaHora}" type="BOTH" dateStyle="medium" timeStyle="short"/></p>
-            <p><strong>Lugar:</strong> ${evento.lugar.nombre}</p>
-            <hr/>
-            <p><strong>Tipo de Entrada:</strong> ${tipoEntradaNombre}</p>
-            <p><strong>Cantidad:</strong> ${cantidad}</p>
-            <p><strong>Precio Unitario:</strong> <fmt:formatNumber value="${precioUnitario}" type="currency" currencySymbol="€"/></p>
-            <p><strong>Total Provisional:</strong> <fmt:formatNumber value="${totalProvisional}" type="currency" currencySymbol="€"/></p>
-            <hr/>
-
-            <form action="${pageContext.request.contextPath}/compra/procesar-pago" method="post">
-                <%-- Estos campos se recuperan en el Servlet desde la sesión, pero podrían pasarse como hidden si fuera necesario --%>
-                <%--
-                <input type="hidden" name="eventoId" value="${evento.id}">
-                <input type="hidden" name="tipoEntradaNombre" value="${tipoEntradaNombre}">
-                <input type="hidden" name="cantidad" value="${cantidad}">
-                --%>
-
-                <h4>Detalles de Pago (Simulado)</h4>
-                <div>
-                    <label for="nombreTitular">Nombre del Titular de la Tarjeta:</label>
-                    <input type="text" id="nombreTitular" name="nombreTitular" required>
-                </div>
-                <div>
-                    <label for="numeroTarjeta">Número de Tarjeta:</label>
-                    <input type="text" id="numeroTarjeta" name="numeroTarjeta" placeholder="XXXX-XXXX-XXXX-XXXX" required>
-                </div>
-                <div>
-                    <label for="fechaExpiracion">Fecha de Expiración (MM/AA):</label>
-                    <input type="text" id="fechaExpiracion" name="fechaExpiracion" placeholder="MM/AA" required>
-                </div>
-                <div>
-                    <label for="cvv">CVV:</label>
-                    <input type="text" id="cvv" name="cvv" placeholder="XXX" required>
-                </div>
-                <br/>
-                <div>
-                    <label for="codigoDescuento">Código de Descuento (Opcional):</label>
-                    <input type="text" id="codigoDescuento" name="codigoDescuento">
-                </div>
-                <br/>
-                <button type="submit">Pagar y Confirmar Compra</button>
-            </form>
-        </c:if>
-         <p><a href="${pageContext.request.contextPath}/evento/detalle?id=${evento.id}">Volver al detalle del evento</a></p>
+        <c:choose>
+            <c:when test="${not empty listaMisCompras}">
+                <c:forEach var="compra" items="${listaMisCompras}">
+                    <div class="compra-item" style="border: 1px solid #ccc; margin-bottom: 20px; padding: 15px;">
+                        <h3>Evento: <c:out value="${compra.evento.nombre}"/></h3>
+                        <p>
+                            <strong>ID Compra:</strong> <c:out value="${compra.id}"/> <br/>
+                            <strong>Fecha de Compra:</strong>
+                            <c:if test="${not empty compra.fechaCompra}">
+                                <fmt:formatDate value="${compra.fechaCompra}" type="BOTH" dateStyle="long" timeStyle="medium"/>
+                            </c:if>
+                            <c:if test="${empty compra.fechaCompra}">
+                                N/A
+                            </c:if>
+                            <br/>
+                            <strong>Estado Compra:</strong> <c:out value="${compra.estadoCompra}"/> <br/>
+                            <strong>Total Pagado:</strong> <fmt:formatNumber value="${compra.totalPagado}" type="currency" currencySymbol="€"/>
+                        </p>
+                        <h4>Entradas Adquiridas:</h4>
+                        <c:if test="${not empty compra.entradasCompradas}">
+                            <ul>
+                                <c:forEach var="entrada" items="${compra.entradasCompradas}">
+                                    <li>
+                                        <strong>ID Entrada:</strong> <c:out value="${entrada.id}"/> <br/>
+                                        <strong>Tipo:</strong> <c:out value="${entrada.tipo}"/> <br/>
+                                        <strong>Precio Pagado:</strong> <fmt:formatNumber value="${entrada.precio}" type="currency" currencySymbol="€"/> <br/>
+                                        <em><c:out value="${entrada.descripcion}"/></em>
+                                        <%-- Aquí se podría añadir un enlace o botón para "Ver QR" o "Descargar PDF" si existiera esa funcionalidad --%>
+                                    </li>
+                                </c:forEach>
+                            </ul>
+                        </c:if>
+                        <c:if test="${empty compra.entradasCompradas}">
+                            <p>No hay detalles de entradas para esta compra.</p>
+                        </c:if>
+                    </div>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <p>No has realizado ninguna compra todavía o no se pudieron cargar tus entradas.</p>
+            </c:otherwise>
+        </c:choose>
+        <p><a href="${pageContext.request.contextPath}/eventos">Ver más eventos</a></p>
     </div>
 
     <jsp:include page="/jsp/common/footer.jsp" />

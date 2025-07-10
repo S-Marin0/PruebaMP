@@ -52,7 +52,7 @@
 
             <h3>Historial de Compras</h3>
             <jsp:include page="/jsp/compra/misEntradas.jsp">
-                 <jsp:param name="showHeader" value="false"/> <%-- No mostrar título si se incluye --%>
+                <jsp:param name="showHeader" value="false"/>
             </jsp:include>
 
 

@@ -307,15 +307,22 @@ public class CompraServlet extends HttpServlet {
 
 
         if (compraRealizada != null && "COMPLETADA".equals(compraRealizada.getEstadoCompra())) {
-            // Opcional: guardar la compra en sesión si se va a mostrar inmediatamente después,
-            // o mejor pasar solo el ID y recuperarla.
-            // session.setAttribute("ultimaCompraRealizada", compraRealizada);
+            // Actualizar el usuario en sesión para reflejar la nueva compra en su historial
+            Optional<Usuario> usuarioActualizadoOpt = usuarioService.findUsuarioById(asistente.getId());
+            if (usuarioActualizadoOpt.isPresent()) {
+                session.setAttribute("usuarioLogueado", usuarioActualizadoOpt.get());
+                System.out.println("CompraServlet#procesarPagoCompra: Usuario en sesión actualizado con nueva compra.");
+            } else {
+                // Esto sería muy raro si el asistente estaba logueado para hacer la compra
+                System.err.println("CompraServlet#procesarPagoCompra: No se pudo recargar el usuario para actualizar la sesión.");
+            }
             response.sendRedirect(request.getContextPath() + "/compra/exitosa?compraId=" + compraRealizada.getId());
         } else {
             String errorMsg = (compraRealizada != null && compraRealizada.getEstadoCompra() != null) ?
                               "Estado de compra: " + compraRealizada.getEstadoCompra() :
                               "La compra no pudo ser completada.";
             System.err.println("CompraServlet: Fallo en procesoCompraFacade. " + errorMsg);
+            // No repoblar sesión con usuario si la compra falló, ya que el historial no cambió.
             response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&errorCompra=" + java.net.URLEncoder.encode(errorMsg, "UTF-8"));
         }
     }
@@ -338,11 +345,26 @@ public class CompraServlet extends HttpServlet {
     private void mostrarMisEntradas(HttpServletRequest request, HttpServletResponse response, Asistente asistente)
             throws ServletException, IOException {
         // El UsuarioService ya debería cargar el historial de compras al obtener el Asistente.
-        // Si no, se cargaría aquí:
-        // List<Compra> misCompras = compraService.findByUsuarioId(asistente.getId());
-        // request.setAttribute("listaMisCompras", misCompras);
-        // El Asistente ya tiene su historial de compras cargado por UsuarioService
-        request.setAttribute("listaMisCompras", asistente.getHistorialCompras());
+        List<Compra> historial = asistente.getHistorialCompras();
+        System.out.println("CompraServlet#mostrarMisEntradas: Asistente: " + asistente.getEmail() +
+                           ", Número de compras en historial: " + (historial != null ? historial.size() : "null (historial es null)"));
+        if (historial != null) {
+            for (Compra c : historial) {
+                System.out.println("  -> Compra ID: " + c.getId() + ", Evento: " + c.getEvento().getNombre() + ", Estado: " + c.getEstadoCompra());
+            }
+        }
+
+        // Opcional: Forzar recarga del usuario desde el servicio para asegurar datos frescos,
+        // ya que el objeto 'asistente' viene de la sesión y podría no estar 100% al día
+        // si otras operaciones modificaron su historial sin actualizar la sesión.
+        // Optional<Usuario> usuarioActualizadoOpt = usuarioService.findUsuarioById(asistente.getId());
+        // if (usuarioActualizadoOpt.isPresent() && usuarioActualizadoOpt.get() instanceof Asistente) {
+        //     asistente = (Asistente) usuarioActualizadoOpt.get();
+        //     historial = asistente.getHistorialCompras();
+        //     System.out.println("   (Después de recargar usuario) Compras en historial: " + (historial != null ? historial.size() : "null"));
+        // }
+
+        request.setAttribute("listaMisCompras", historial);
         RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/misEntradas.jsp");
         dispatcher.forward(request, response);
     }
