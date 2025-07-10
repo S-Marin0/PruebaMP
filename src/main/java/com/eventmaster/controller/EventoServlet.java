@@ -592,10 +592,8 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 new HashMap<>();
 
             // Limpiar el mapa en el objeto eventoAEditar para llenarlo con los datos del formulario.
-            // El EventoService se encargará de la sincronización con el DAO.
-            if (eventoAEditar.getTiposEntradaDisponibles() == null) {
-                 eventoAEditar.setTiposEntradaDisponibles(new HashMap<>()); // Asumiendo setter, o modificar Evento para asegurar que nunca sea null
-            }
+            // Evento.getTiposEntradaDisponibles() está garantizado a no ser null por el constructor/builder del Evento,
+            // y siempre devolverá al menos un mapa vacío.
             eventoAEditar.getTiposEntradaDisponibles().clear();
 
             boolean primerTipoEntradaValidoIngresado = false;
