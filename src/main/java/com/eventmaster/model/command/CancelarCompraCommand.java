@@ -4,7 +4,8 @@ import com.eventmaster.model.entity.Compra;
 import com.eventmaster.model.entity.Usuario;
 import com.eventmaster.model.entity.Evento;
 import com.eventmaster.service.EventoService; // Para actualizar la disponibilidad de entradas
-import com.eventmaster.service.PagoService;   // Para procesar reembolsos si es necesario
+import com.eventmaster.service.ProcesadorPago; // CAMBIO
+import com.eventmaster.service.ProcesadorPago.ResultadoPago; // CAMBIO
 import com.eventmaster.service.NotificacionService; // Para notificar al usuario
 
 import java.time.LocalDateTime;
@@ -15,20 +16,21 @@ public class CancelarCompraCommand implements Command {
     private String motivoCancelacion;
 
     private EventoService eventoService;
-    private PagoService pagoService;
+    private ProcesadorPago procesadorPago; // CAMBIO
     private NotificacionService notificacionService;
     private LocalDateTime tiempoEjecucion;
 
     private String estadoOriginalCompra; // Para el undo
     private int cantidadEntradasDevueltas; // Para el undo
+    private String idTransaccionPasarelaOriginal; // Para el undo del reembolso, si fuera posible
 
     public CancelarCompraCommand(Compra compraACancelar, Usuario usuarioQueCancela, String motivoCancelacion,
-                                 EventoService eventoService, PagoService pagoService, NotificacionService notificacionService) {
+                                 EventoService eventoService, ProcesadorPago procesadorPago, NotificacionService notificacionService) { // CAMBIO
         this.compraACancelar = compraACancelar;
         this.usuarioQueCancela = usuarioQueCancela; // Importante para verificar permisos y notificar
         this.motivoCancelacion = motivoCancelacion;
         this.eventoService = eventoService;
-        this.pagoService = pagoService;
+        this.procesadorPago = procesadorPago; // CAMBIO
         this.notificacionService = notificacionService;
     }
 
@@ -68,19 +70,29 @@ public class CancelarCompraCommand implements Command {
         if ("COMPLETADA".equals(this.estadoOriginalCompra)) {
             // Aquí iría la lógica de si aplica reembolso o no (políticas de cancelación, tiempo, etc.)
             // Por ahora, asumimos que sí aplica si estaba completada.
-            if (pagoService != null) {
-                reembolsoProcesado = pagoService.procesarReembolso(compraACancelar.getUsuario(), compraACancelar.getId(), compraACancelar.getTotalPagado());
-                if(reembolsoProcesado) {
-                    System.out.println("Comando CancelarCompra: Reembolso procesado.");
+            if (procesadorPago != null) {
+                // ASUNCIÓN: compraACancelar tiene un método getIdTransaccionPasarela()
+                // Este ID se debió guardar en la Compra cuando el pago original se procesó.
+                String idTransaccionOriginal = compraACancelar.getIdTransaccionPasarela(); // Necesitamos este método en Compra
+                if (idTransaccionOriginal == null || idTransaccionOriginal.trim().isEmpty()) {
+                    System.err.println("Comando CancelarCompra: No se puede procesar reembolso, falta ID de transacción de pasarela original en la compra.");
+                    // Considerar esto como un fallo parcial o completo de la cancelación.
                 } else {
-                    System.err.println("Comando CancelarCompra: Fallo al procesar el reembolso. La cancelación continuará pero el reembolso debe manejarse manualmente.");
-                    // Dependiendo de la política, se podría detener la cancelación aquí.
+                    this.idTransaccionPasarelaOriginal = idTransaccionOriginal; // Guardar para posible undo (complejo)
+                    ResultadoPago resultadoReembolso = procesadorPago.procesarReembolso(idTransaccionOriginal, compraACancelar.getTotalPagado());
+                    reembolsoProcesado = resultadoReembolso.isExito();
+                    if(reembolsoProcesado) {
+                        System.out.println("Comando CancelarCompra: Reembolso procesado. ID Pasarela Reembolso: " + resultadoReembolso.getIdTransaccionPasarela());
+                    } else {
+                        System.err.println("Comando CancelarCompra: Fallo al procesar el reembolso ("+ resultadoReembolso.getMensaje() +"). La cancelación continuará pero el reembolso debe manejarse manualmente.");
+                        // Dependiendo de la política, se podría detener la cancelación aquí.
+                    }
                 }
             }
         }
 
         // 3. Actualizar estado de la compra
-        compraACancelar.setEstadoCompra(reembolsoProcesado ? "REEMBOLSADA" : "CANCELADA");
+        compraACancelar.setEstadoCompra(reembolsoProcesado ? "REEMBOLSADA_POR_CANCELACION" : "CANCELADA");
         // En un sistema real, el UsuarioService podría actualizar la compra en el historial del usuario.
         // usuarioService.actualizarCompraEnHistorial(usuarioQueCancela, compraACancelar);
 

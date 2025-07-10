@@ -1,8 +1,8 @@
 package com.eventmaster.model.command;
 
-import com.eventmaster.model.entity.Evento;
+import com.eventmaster.model.entity.Evento; // Ya estaba, pero es crucial
 import com.eventmaster.model.entity.Organizador;
-import com.eventmaster.model.pattern.builder.EventoBuilder; // Para pasar los nuevos datos
+// ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
 import com.eventmaster.service.EventoService;
 
 import java.time.LocalDateTime;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class EditarEventoCommand implements Command {
     private Evento eventoOriginal; // El evento a editar
-    private EventoBuilder datosNuevosBuilder; // Datos para la actualización
+    private Evento.EventoBuilder datosNuevosBuilder; // CAMBIO: Datos para la actualización
     private Organizador organizador; // Quien ejecuta la edición
     private EventoService eventoService; // Para persistir/notificar cambios
     private LocalDateTime tiempoEjecucion;
@@ -19,7 +19,7 @@ public class EditarEventoCommand implements Command {
     // Para guardar el estado anterior y poder hacer undo
     private Map<String, Object> estadoAnterior;
 
-    public EditarEventoCommand(Evento eventoOriginal, EventoBuilder datosNuevosBuilder, Organizador organizador, EventoService eventoService) {
+    public EditarEventoCommand(Evento eventoOriginal, Evento.EventoBuilder datosNuevosBuilder, Organizador organizador, EventoService eventoService) { // CAMBIO
         this.eventoOriginal = eventoOriginal;
         this.datosNuevosBuilder = datosNuevosBuilder;
         this.organizador = organizador;
