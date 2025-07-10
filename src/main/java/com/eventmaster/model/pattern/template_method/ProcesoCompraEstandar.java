@@ -21,11 +21,12 @@ public class ProcesoCompraEstandar extends ProcesoCompraTemplate {
     private Map<String, TipoEntradaFactory> entradaFactories;
     // private PromocionService promocionService; // Para validar códigos de descuento
 
-    public ProcesoCompraEstandar(PagoService pagoService, NotificacionService notificacionService,
+    // CAMBIO en el tipo del primer parámetro del constructor
+    public ProcesoCompraEstandar(ProcesadorPago procesadorPago, NotificacionService notificacionService,
                                  EventoService eventoService, UsuarioService usuarioService,
                                  Map<String, TipoEntradaFactory> entradaFactories
                                  /*, PromocionService promocionService */) {
-        super(pagoService, notificacionService, eventoService, usuarioService);
+        super(procesadorPago, notificacionService, eventoService, usuarioService); // CAMBIO: pasar procesadorPago
         this.entradaFactories = entradaFactories;
         // this.promocionService = promocionService;
     }

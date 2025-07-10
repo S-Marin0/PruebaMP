@@ -24,8 +24,10 @@ public class EventoDirector {
     // El builder se pasa como argumento.
     // El tipo de 'builder' ya estaba correcto como Evento.EventoBuilder en la implementación anterior.
     public void construirEventoConciertoRock(Evento.EventoBuilder builder, String nombre, Organizador organizador, Lugar lugar, LocalDateTime fechaHora) {
+        // El 'nombre', 'organizador', 'lugar', 'fechaHora' se asumen ya establecidos en el 'builder'
+        // por quien lo instanció antes de pasarlo al director.
+        // Por lo tanto, no llamamos a builder.setNombre(nombre) aquí.
         builder
-            .setNombre(nombre)
             // Los siguientes ya están implícitos en el constructor del builder que recibe EventoDirector
             // .setOrganizador(organizador)
             // .setLugar(lugar)
@@ -49,8 +51,8 @@ public class EventoDirector {
     }
 
     public void construirEventoConferenciaTech(Evento.EventoBuilder builder, String nombre, Organizador organizador, Lugar lugar, LocalDateTime fechaHora) {
+        // El 'nombre', 'organizador', 'lugar', 'fechaHora' se asumen ya establecidos en el 'builder'.
         builder
-            .setNombre(nombre)
             .setCategoria("Conferencia de Tecnología")
             .setDescripcion("Explora las últimas tendencias en tecnología e innovación.")
             .addImagenUrl("default_tech_conference_image.jpg")

@@ -5,7 +5,7 @@ import com.eventmaster.model.entity.Organizador; // Para creación/edición
 import com.eventmaster.model.entity.Usuario;
 // ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
 import com.eventmaster.service.EventoService;
-import com.eventmaster.service.LugarService; // Para obtener lugares al crear/editar
+// ELIMINAR: import com.eventmaster.service.LugarService;
 import com.eventmaster.service.UsuarioService; // Para obtener organizador de sesión
 
 import jakarta.servlet.RequestDispatcher;
@@ -32,7 +32,7 @@ import java.util.Optional;
 public class EventoServlet extends HttpServlet {
 
     private EventoService eventoService;
-    private LugarService lugarService; // Ejemplo, si necesitamos cargar lugares
+    // ELIMINAR: private LugarService lugarService;
     private UsuarioService usuarioService;
 
 
@@ -41,7 +41,7 @@ public class EventoServlet extends HttpServlet {
         super.init();
         ServletContext context = getServletContext();
         eventoService = (EventoService) context.getAttribute("eventoService");
-        lugarService = (LugarService) context.getAttribute("lugarService"); // Asumiendo que existe
+        // ELIMINAR: lugarService = (LugarService) context.getAttribute("lugarService");
         usuarioService = (UsuarioService) context.getAttribute("usuarioService");
 
         if (eventoService == null) {
@@ -184,9 +184,10 @@ public class EventoServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login?mensaje=Acceso denegado. Debe ser organizador.");
             return;
         }
-        // Aquí se podrían cargar datos necesarios para el formulario, como lista de lugares disponibles
-        // List<Lugar> lugares = lugarService.findAll();
-        // request.setAttribute("lugares", lugares);
+        // ELIMINAR USO:
+        // // Aquí se podrían cargar datos necesarios para el formulario, como lista de lugares disponibles
+        // // List<Lugar> lugares = lugarService.findAll();
+        // // request.setAttribute("lugares", lugares);
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/evento/crearEventoForm.jsp");
         dispatcher.forward(request, response);
     }

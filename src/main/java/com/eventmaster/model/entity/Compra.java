@@ -16,6 +16,7 @@ public class Compra {
     private double totalPagado;
     private LocalDateTime fechaCompra;
     private String estadoCompra; // Ej: "PENDIENTE_PAGO", "COMPLETADA", "CANCELADA", "REEMBOLSADA"
+    private String idTransaccionPasarela; // NUEVO CAMPO: ID de la transacción original en la pasarela de pago
     private List<Command> historialOperaciones; // Para registrar comandos como CancelarCompraCommand, ReembolsarCommand
 
     public Compra(String id, Usuario usuario, Evento evento) {
@@ -61,6 +62,10 @@ public class Compra {
         return historialOperaciones;
     }
 
+    public String getIdTransaccionPasarela() { // NUEVO GETTER
+        return idTransaccionPasarela;
+    }
+
     // Setters
     public void setId(String id) {
         this.id = id;
@@ -85,6 +90,10 @@ public class Compra {
     public void setEstadoCompra(String estadoCompra) {
         this.estadoCompra = estadoCompra;
         // Aquí se podría añadir lógica para notificar cambios de estado si es necesario
+    }
+
+    public void setIdTransaccionPasarela(String idTransaccionPasarela) { // NUEVO SETTER
+        this.idTransaccionPasarela = idTransaccionPasarela;
     }
 
     // Métodos de negocio
