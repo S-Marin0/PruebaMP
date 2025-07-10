@@ -11,22 +11,23 @@ public class EstadoCancelado implements EstadoEvento {
 
     @Override
     public void publicar() {
-        System.out.println("No se puede publicar un evento que ha sido cancelado. Considere crear un nuevo evento.");
+        throw new IllegalStateException("No se puede publicar un evento que ha sido cancelado. Considere crear un nuevo evento.");
     }
 
     @Override
     public void cancelar() {
-        System.out.println("El evento '" + evento.getNombre() + "' ya está cancelado.");
+        // System.out.println("El evento '" + evento.getNombre() + "' ya está cancelado."); // Opcional: lanzar excepción o permitirlo como idempotente
+        throw new IllegalStateException("El evento '" + evento.getNombre() + "' ya está cancelado.");
     }
 
     @Override
     public void iniciar() {
-        System.out.println("No se puede iniciar un evento que ha sido cancelado.");
+        throw new IllegalStateException("No se puede iniciar un evento que ha sido cancelado.");
     }
 
     @Override
     public void finalizar() {
-        System.out.println("No se puede finalizar un evento que ha sido cancelado.");
+        throw new IllegalStateException("No se puede finalizar un evento que ha sido cancelado.");
     }
 
     @Override

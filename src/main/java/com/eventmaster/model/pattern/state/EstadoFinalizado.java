@@ -11,22 +11,22 @@ public class EstadoFinalizado implements EstadoEvento {
 
     @Override
     public void publicar() {
-        System.out.println("No se puede publicar un evento que ya ha finalizado.");
+        throw new IllegalStateException("No se puede publicar un evento que ya ha finalizado.");
     }
 
     @Override
     public void cancelar() {
-        System.out.println("No se puede cancelar un evento que ya ha finalizado.");
+        throw new IllegalStateException("No se puede cancelar un evento que ya ha finalizado.");
     }
 
     @Override
     public void iniciar() {
-        System.out.println("No se puede iniciar un evento que ya ha finalizado.");
+        throw new IllegalStateException("No se puede iniciar un evento que ya ha finalizado.");
     }
 
     @Override
     public void finalizar() {
-        System.out.println("El evento '" + evento.getNombre() + "' ya está finalizado.");
+        // System.out.println("El evento '" + evento.getNombre() + "' ya está finalizado."); // Idempotente, no lanzar error
     }
 
     @Override
