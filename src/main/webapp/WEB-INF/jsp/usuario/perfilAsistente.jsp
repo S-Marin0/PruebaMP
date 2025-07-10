@@ -42,19 +42,57 @@
 
             <h3>Configuración de Notificaciones</h3>
             <c:if test="${not empty usuario.configuracionNotificaciones}">
-                <p>Recibir Notificaciones de Nuevos Eventos Importantes: ${usuario.configuracionNotificaciones.recibirNotificacionesNuevosEventosImportantes ? 'Sí' : 'No'}</p>
-                <p>Recibir Recordatorios de Eventos Comprados: ${usuario.configuracionNotificaciones.recibirRecordatoriosEventosComprados ? 'Sí' : 'No'}</p>
-                <p>Recibir Notificaciones de Cambios en Eventos Comprados: ${usuario.configuracionNotificaciones.recibirNotificacionesCambiosEventoComprado ? 'Sí' : 'No'}</p>
-                <p>Recibir Recomendaciones Personalizadas: ${usuario.configuracionNotificaciones.recibirRecomendacionesPersonalizadas ? 'Sí' : 'No'}</p>
-                <p>Método Preferido: ${usuario.configuracionNotificaciones.metodoPreferido}</p>
-            </c:if>
-            <%-- Aquí iría un formulario para editar configuración de notificaciones --%>
+                <form action="${pageContext.request.contextPath}/usuario/actualizarNotificaciones" method="POST">
+                    <fieldset>
+                        <legend>Preferencias de Notificación</legend>
 
+                        <p>
+                            <input type="checkbox" id="recibirNuevosEventos" name="recibirNotificacionesNuevosEventosImportantes" value="true" ${usuario.configuracionNotificaciones.recibirNotificacionesNuevosEventosImportantes ? 'checked' : ''}>
+                            <label for="recibirNuevosEventos">Recibir Notificaciones de Nuevos Eventos Importantes</label>
+                        </p>
+
+                        <p>
+                            <input type="checkbox" id="recibirRecordatorios" name="recibirRecordatoriosEventosComprados" value="true" ${usuario.configuracionNotificaciones.recibirRecordatoriosEventosComprados ? 'checked' : ''}>
+                            <label for="recibirRecordatorios">Recibir Recordatorios de Eventos Comprados</label>
+                        </p>
+
+                        <p>
+                            <input type="checkbox" id="recibirCambiosEvento" name="recibirNotificacionesCambiosEventoComprado" value="true" ${usuario.configuracionNotificaciones.recibirNotificacionesCambiosEventoComprado ? 'checked' : ''}>
+                            <label for="recibirCambiosEvento">Recibir Notificaciones de Cambios en Eventos Comprados</label>
+                        </p>
+
+                        <p>
+                            <input type="checkbox" id="recibirRecomendaciones" name="recibirRecomendacionesPersonalizadas" value="true" ${usuario.configuracionNotificaciones.recibirRecomendacionesPersonalizadas ? 'checked' : ''}>
+                            <label for="recibirRecomendaciones">Recibir Recomendaciones Personalizadas</label>
+                        </p>
+
+                        <p>
+                            <label for="metodoPreferido">Método Preferido:</label>
+                            <%-- Opciones para metodoPreferido pueden ser un dropdown si hay varias opciones. Por ahora, un campo de texto o mostrar el valor actual --%>
+                            <%-- <input type="text" id="metodoPreferido" name="metodoPreferido" value="${usuario.configuracionNotificaciones.metodoPreferido}"> --%>
+                            <span>${usuario.configuracionNotificaciones.metodoPreferido}</span>
+                            <%-- Si se quiere hacer editable, se necesitará saber las opciones válidas. Ejemplo con dropdown:
+                            <select id="metodoPreferido" name="metodoPreferido">
+                                <option value="Email" ${usuario.configuracionNotificaciones.metodoPreferido == 'Email' ? 'selected' : ''}>Email</option>
+                                <option value="SMS" ${usuario.configuracionNotificaciones.metodoPreferido == 'SMS' ? 'selected' : ''}>SMS (si implementado)</option>
+                            </select>
+                            --%>
+                        </p>
+
+                        <p><input type="submit" value="Guardar Preferencias de Notificación"></p>
+                    </fieldset>
+                </form>
+            </c:if>
+            <c:if test="${empty usuario.configuracionNotificaciones}">
+                <p>No se pudo cargar la configuración de notificaciones.</p>
+            </c:if>
+
+            <%--
             <h3>Historial de Compras</h3>
             <jsp:include page="/jsp/compra/misEntradas.jsp">
                 <jsp:param name="showHeader" value="false"/>
             </jsp:include>
-
+            --%>
 
         </c:if>
         <c:if test="${empty usuario}">

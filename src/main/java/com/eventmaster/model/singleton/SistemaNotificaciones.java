@@ -2,9 +2,11 @@ package com.eventmaster.model.singleton;
 
 import com.eventmaster.model.pattern.observer.Observer;
 import com.eventmaster.model.pattern.observer.Subject;
+import com.eventmaster.model.entity.Asistente; // Necesario para acceder a NotificacionConfig
 import com.eventmaster.model.entity.Evento;
 import com.eventmaster.model.entity.Usuario; // Para enviar notificaciones directas
 import com.eventmaster.model.entity.Compra;  // Para notificaciones de compra
+import com.eventmaster.model.NotificacionConfig; // Necesario para acceder a las preferencias
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +111,8 @@ public class SistemaNotificaciones implements Subject {
     // Estos no son parte del patrón Observer directamente, sino funcionalidades del Singleton.
 
     public void enviarConfirmacionCompra(Usuario usuario, Compra compra) {
+        // Las confirmaciones de compra suelen ser importantes y no opcionales.
+        // Si se quisiera hacer opcional, se añadiría una verificación de preferencias aquí.
         System.out.println("SistemaNotificaciones (Singleton): Enviando email de confirmación de compra a " + usuario.getEmail());
         System.out.println("  Detalles de la Compra ID: " + compra.getId() + " para evento " + compra.getEvento().getNombre());
         // Aquí iría la lógica real de envío (email, SMS, etc.)
@@ -116,16 +120,67 @@ public class SistemaNotificaciones implements Subject {
     }
 
     public void enviarRecordatorioEvento(Usuario usuario, Evento evento) {
-        // Verificar si el usuario desea este tipo de notificaciones desde su NotificacionConfig
-        // Asistente asistente = (Asistente) usuario; // Asumiendo que solo asistentes reciben recordatorios
-        // if (asistente.getConfiguracionNotificaciones().isRecibirRecordatoriosEventos()){
-            System.out.println("SistemaNotificaciones (Singleton): Enviando recordatorio para evento '" + evento.getNombre() + "' a " + usuario.getEmail());
-        // }
+        if (usuario instanceof Asistente) {
+            Asistente asistente = (Asistente) usuario;
+            NotificacionConfig config = asistente.getConfiguracionNotificaciones();
+            if (config != null && config.isRecibirRecordatoriosEventosComprados()) {
+                System.out.println("SistemaNotificaciones (Singleton): Enviando recordatorio para evento '" + evento.getNombre() + "' a " + usuario.getEmail());
+                // Lógica de envío real aquí
+            } else {
+                System.out.println("SistemaNotificaciones (Singleton): Usuario " + usuario.getEmail() + " ha optado por NO recibir recordatorios de eventos.");
+            }
+        } else {
+            // Comportamiento para usuarios no Asistentes o sin configuración (si aplica)
+             System.out.println("SistemaNotificaciones (Singleton): Enviando recordatorio para evento '" + evento.getNombre() + "' a " + usuario.getEmail() + " (usuario no es Asistente o config no aplica).");
+        }
+    }
+
+    public void enviarNotificacionCambioEvento(Usuario usuario, Evento evento, String mensajeCambio) {
+        if (usuario instanceof Asistente) {
+            Asistente asistente = (Asistente) usuario;
+            NotificacionConfig config = asistente.getConfiguracionNotificaciones();
+            if (config != null && config.isRecibirNotificacionesCambiosEventoComprado()) {
+                System.out.println("SistemaNotificaciones (Singleton): Enviando notificación de cambio para evento '" + evento.getNombre() + "' a " + usuario.getEmail() + ". Mensaje: " + mensajeCambio);
+                // Lógica de envío real aquí
+            } else {
+                System.out.println("SistemaNotificaciones (Singleton): Usuario " + usuario.getEmail() + " ha optado por NO recibir notificaciones de cambios en eventos comprados.");
+            }
+        } else {
+             System.out.println("SistemaNotificaciones (Singleton): Enviando notificación de cambio para evento '" + evento.getNombre() + "' a " + usuario.getEmail() + " (usuario no es Asistente o config no aplica). Mensaje: " + mensajeCambio);
+        }
     }
 
     public void enviarRecomendacion(Usuario usuario, Evento eventoRecomendado) {
-        System.out.println("SistemaNotificaciones (Singleton): Enviando recomendación de evento '" + eventoRecomendado.getNombre() + "' a " + usuario.getEmail());
+        if (usuario instanceof Asistente) {
+            Asistente asistente = (Asistente) usuario;
+            NotificacionConfig config = asistente.getConfiguracionNotificaciones();
+            if (config != null && config.isRecibirRecomendacionesPersonalizadas()) {
+                System.out.println("SistemaNotificaciones (Singleton): Enviando recomendación de evento '" + eventoRecomendado.getNombre() + "' a " + usuario.getEmail());
+                // Lógica de envío real aquí
+            } else {
+                System.out.println("SistemaNotificaciones (Singleton): Usuario " + usuario.getEmail() + " ha optado por NO recibir recomendaciones personalizadas.");
+            }
+        } else {
+            // Comportamiento para usuarios no Asistentes o sin configuración
+            System.out.println("SistemaNotificaciones (Singleton): Enviando recomendación de evento '" + eventoRecomendado.getNombre() + "' a " + usuario.getEmail() + " (usuario no es Asistente o config no aplica).");
+        }
     }
+
+    public void enviarNotificacionNuevoEventoImportante(Usuario usuario, Evento evento) {
+        if (usuario instanceof Asistente) {
+            Asistente asistente = (Asistente) usuario;
+            NotificacionConfig config = asistente.getConfiguracionNotificaciones();
+            if (config != null && config.isRecibirNotificacionesNuevosEventosImportantes()) {
+                System.out.println("SistemaNotificaciones (Singleton): Enviando notificación de nuevo evento importante '" + evento.getNombre() + "' a " + usuario.getEmail());
+                // Lógica de envío real aquí
+            } else {
+                System.out.println("SistemaNotificaciones (Singleton): Usuario " + usuario.getEmail() + " ha optado por NO recibir notificaciones de nuevos eventos importantes.");
+            }
+        } else {
+            System.out.println("SistemaNotificaciones (Singleton): Enviando notificación de nuevo evento importante '" + evento.getNombre() + "' a " + usuario.getEmail() + " (usuario no es Asistente o config no aplica).");
+        }
+    }
+
 
     // Método para proteger de la clonación (parte de la implementación robusta de Singleton)
     @Override

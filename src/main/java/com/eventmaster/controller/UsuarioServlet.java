@@ -99,6 +99,9 @@ public class UsuarioServlet extends HttpServlet {
                 case "/registro/organizador":
                     procesarRegistroOrganizador(request, response);
                     break;
+                case "/actualizarNotificaciones":
+                    procesarActualizarNotificaciones(request, response);
+                    break;
                 // case "/perfil/editar": // Ejemplo
                 //     procesarEditarPerfil(request, response);
                 //     break;
@@ -292,6 +295,53 @@ public class UsuarioServlet extends HttpServlet {
             dispatcher.forward(request, response);
         } else {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Tipo de usuario desconocido para perfil.");
+        }
+    }
+
+    private void procesarActualizarNotificaciones(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("usuarioLogueado") == null) {
+            response.sendRedirect(request.getContextPath() + "/usuario/login?mensaje=Debe iniciar sesión para actualizar sus preferencias.");
+            return;
+        }
+
+        Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
+        if (!(usuario instanceof Asistente)) {
+            response.sendRedirect(request.getContextPath() + "/index?error=Acción no permitida para su tipo de usuario.");
+            return;
+        }
+
+        Asistente asistente = (Asistente) usuario;
+        com.eventmaster.model.NotificacionConfig config = asistente.getConfiguracionNotificaciones();
+
+        if (config == null) {
+            // Esto sería inusual si el Asistente siempre se inicializa con una config
+            config = new com.eventmaster.model.NotificacionConfig(asistente.getId());
+            asistente.setConfiguracionNotificaciones(config);
+        }
+
+        // Actualizar preferencias basadas en los parámetros del formulario
+        // Los checkboxes no envían parámetro si no están marcados, por lo que "true".equals(...) manejará null como false.
+        config.setRecibirNotificacionesNuevosEventosImportantes("true".equals(request.getParameter("recibirNotificacionesNuevosEventosImportantes")));
+        config.setRecibirRecordatoriosEventosComprados("true".equals(request.getParameter("recibirRecordatoriosEventosComprados")));
+        config.setRecibirNotificacionesCambiosEventoComprado("true".equals(request.getParameter("recibirNotificacionesCambiosEventoComprado")));
+        config.setRecibirRecomendacionesPersonalizadas("true".equals(request.getParameter("recibirRecomendacionesPersonalizadas")));
+
+        // Si metodoPreferido fuera editable, se actualizaría aquí:
+        // String metodoPreferidoParam = request.getParameter("metodoPreferido");
+        // if (metodoPreferidoParam != null && !metodoPreferidoParam.isEmpty()) {
+        //    config.setMetodoPreferido(metodoPreferidoParam);
+        // }
+
+        try {
+            usuarioService.actualizarUsuario(asistente); // Asumiendo que esto guarda el estado completo del Asistente, incluyendo su NotificacionConfig
+            // Actualizar el objeto en sesión también
+            session.setAttribute("usuarioLogueado", asistente);
+            response.sendRedirect(request.getContextPath() + "/usuario/perfil?mensaje=Preferencias de notificación actualizadas con éxito.");
+        } catch (Exception e) {
+            System.err.println("Error al actualizar preferencias de notificación: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/usuario/perfil?errorGeneral=Error al guardar sus preferencias.");
         }
     }
 }
