@@ -15,6 +15,8 @@ public class ComprarEntradaCommand implements Command {
     private int cantidad;
     private Map<String, Object> detallesPago;
     private String codigoDescuento; // Opcional
+    private boolean aplicarMercancia;
+    private boolean aplicarDescuento;
 
     private ProcesoCompraFacade procesoCompraFacade;
     private Compra compraRealizada; // Para el undo y para obtener el resultado
@@ -22,6 +24,7 @@ public class ComprarEntradaCommand implements Command {
 
     public ComprarEntradaCommand(Usuario usuario, String eventoId, String tipoEntradaNombre, int cantidad,
                                  Map<String, Object> detallesPago, String codigoDescuento,
+                                 boolean aplicarMercancia, boolean aplicarDescuento,
                                  ProcesoCompraFacade procesoCompraFacade) {
         this.usuario = usuario;
         this.eventoId = eventoId;
@@ -29,22 +32,28 @@ public class ComprarEntradaCommand implements Command {
         this.cantidad = cantidad;
         this.detallesPago = detallesPago;
         this.codigoDescuento = codigoDescuento;
+        this.aplicarMercancia = aplicarMercancia;
+        this.aplicarDescuento = aplicarDescuento;
         this.procesoCompraFacade = procesoCompraFacade;
     }
 
+    // Constructor anterior simplificado, ahora debe incluir los booleanos o tener valores por defecto
     public ComprarEntradaCommand(Usuario usuario, String eventoId, String tipoEntradaNombre, int cantidad,
                                  Map<String, Object> detallesPago, ProcesoCompraFacade procesoCompraFacade) {
-        this(usuario, eventoId, tipoEntradaNombre, cantidad, detallesPago, null, procesoCompraFacade);
+        this(usuario, eventoId, tipoEntradaNombre, cantidad, detallesPago, null, false, false, procesoCompraFacade); // Por defecto, no aplicar decoradores
     }
 
 
     @Override
     public boolean execute() {
         this.tiempoEjecucion = LocalDateTime.now();
-        System.out.println("Comando ComprarEntrada: Ejecutando para usuario " + usuario.getNombre() + ", Evento ID: " + eventoId + ", Tipo: " + tipoEntradaNombre + ", Cant: " + cantidad);
+        System.out.println("Comando ComprarEntrada: Ejecutando para usuario " + usuario.getNombre() +
+                           ", Evento ID: " + eventoId + ", Tipo: " + tipoEntradaNombre + ", Cant: " + cantidad +
+                           ", Mercancía: " + aplicarMercancia + ", Descuento: " + aplicarDescuento);
         try {
             this.compraRealizada = procesoCompraFacade.ejecutarProcesoCompra(
-                usuario, eventoId, tipoEntradaNombre, cantidad, detallesPago, codigoDescuento
+                usuario, eventoId, tipoEntradaNombre, cantidad, detallesPago, codigoDescuento,
+                this.aplicarMercancia, this.aplicarDescuento
             );
             return this.compraRealizada != null;
         } catch (IllegalArgumentException e) {

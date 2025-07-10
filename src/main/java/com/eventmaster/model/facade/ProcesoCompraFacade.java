@@ -86,7 +86,8 @@ public class ProcesoCompraFacade {
         if (aplicarDescuento && tipoEntradaDef.isOfreceDescuentoOpcional()) {
             // Aquí se podría añadir lógica para verificar límites de uso del descuento si existieran
             precioUnitarioCalculado -= tipoEntradaDef.getMontoDescuentoFijo();
-            descripcionEntradaDecorada += " (Descuento: " + tipoEntradaDef.getDescripcionDescuento() + " aplicado)";
+            // Corregido: usar getDescripcionDescuento()
+            descripcionEntradaDecorada += " (Descuento: " + (tipoEntradaDef.getDescripcionDescuento() != null ? tipoEntradaDef.getDescripcionDescuento() : "Promocional") + " aplicado)";
             System.out.println("ProcesoCompraFacade: Descuento aplicado. Nuevo precio unitario: " + precioUnitarioCalculado);
         }
         if (precioUnitarioCalculado < 0) {
@@ -162,7 +163,7 @@ public class ProcesoCompraFacade {
             if (aplicarDescuento && tipoEntradaDef.isOfreceDescuentoOpcional()) {
                 entradaDecorada = new com.eventmaster.model.pattern.decorator.EntradaConDescuento(
                     entradaDecorada,
-                    tipoEntradaDef.getDescripcionDescuento(),
+                    (tipoEntradaDef.getDescripcionDescuento() != null ? tipoEntradaDef.getDescripcionDescuento() : "Descuento Aplicado"), // Corregido y con fallback
                     tipoEntradaDef.getMontoDescuentoFijo()
                 );
             }
