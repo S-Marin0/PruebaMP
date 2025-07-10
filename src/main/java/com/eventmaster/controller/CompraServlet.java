@@ -349,27 +349,39 @@ public class CompraServlet extends HttpServlet {
 
     private void mostrarMisEntradas(HttpServletRequest request, HttpServletResponse response, Asistente asistente)
             throws ServletException, IOException {
-        // El UsuarioService ya debería cargar el historial de compras al obtener el Asistente.
-        List<Compra> historial = asistente.getHistorialCompras();
+        List<Compra> historialOriginal = asistente.getHistorialCompras();
         System.out.println("CompraServlet#mostrarMisEntradas: Asistente: " + asistente.getEmail() +
-                           ", Número de compras en historial: " + (historial != null ? historial.size() : "null (historial es null)"));
-        if (historial != null) {
-            for (Compra c : historial) {
-                System.out.println("  -> Compra ID: " + c.getId() + ", Evento: " + c.getEvento().getNombre() + ", Estado: " + c.getEstadoCompra());
+                           ", Número de compras en historial original: " + (historialOriginal != null ? historialOriginal.size() : "null"));
+
+        List<Map<String, Object>> historialParaJsp = new java.util.ArrayList<>();
+
+        if (historialOriginal != null) {
+            for (Compra compra : historialOriginal) {
+                Map<String, Object> compraMap = new java.util.HashMap<>();
+                compraMap.put("id", compra.getId());
+                compraMap.put("evento", compra.getEvento()); // JSP puede acceder a compra.evento.nombre
+                compraMap.put("totalPagado", compra.getTotalPagado());
+                compraMap.put("estadoCompra", compra.getEstadoCompra());
+                compraMap.put("entradasCompradas", compra.getEntradasCompradas());
+
+                if (compra.getFechaCompra() != null) {
+                    // Convertir LocalDateTime a java.util.Date para fmt:formatDate
+                    java.util.Date fechaUtil = java.util.Date.from(
+                        compra.getFechaCompra().atZone(java.time.ZoneId.systemDefault()).toInstant()
+                    );
+                    compraMap.put("fechaCompra", fechaUtil); // Sobrescribe con el tipo Date
+                    System.out.println("  -> Compra ID: " + compra.getId() + ", Evento: " + compra.getEvento().getNombre() +
+                                       ", Estado: " + compra.getEstadoCompra() + ", Fecha (util.Date): " + fechaUtil);
+                } else {
+                    compraMap.put("fechaCompra", null);
+                     System.out.println("  -> Compra ID: " + compra.getId() + ", Evento: " + compra.getEvento().getNombre() +
+                                       ", Estado: " + compra.getEstadoCompra() + ", Fecha: null");
+                }
+                historialParaJsp.add(compraMap);
             }
         }
 
-        // Opcional: Forzar recarga del usuario desde el servicio para asegurar datos frescos,
-        // ya que el objeto 'asistente' viene de la sesión y podría no estar 100% al día
-        // si otras operaciones modificaron su historial sin actualizar la sesión.
-        // Optional<Usuario> usuarioActualizadoOpt = usuarioService.findUsuarioById(asistente.getId());
-        // if (usuarioActualizadoOpt.isPresent() && usuarioActualizadoOpt.get() instanceof Asistente) {
-        //     asistente = (Asistente) usuarioActualizadoOpt.get();
-        //     historial = asistente.getHistorialCompras();
-        //     System.out.println("   (Después de recargar usuario) Compras en historial: " + (historial != null ? historial.size() : "null"));
-        // }
-
-        request.setAttribute("listaMisCompras", historial);
+        request.setAttribute("listaMisCompras", historialParaJsp); // Ahora es una lista de Mapas
         RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/misEntradas.jsp");
         dispatcher.forward(request, response);
     }
