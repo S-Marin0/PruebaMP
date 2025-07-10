@@ -48,7 +48,26 @@
                         <input type="number" id="capacidad" name="capacidad" value="${param.capacidad != null ? param.capacidad : 100}" min="1" required>
                     </div>
 
-                    <p><em>Los tipos de entrada se podrán configurar después de crear el evento base.</em></p>
+                    <hr/>
+                    <h4>Definir un Tipo de Entrada Principal</h4>
+                    <div>
+                        <label for="tipoEntradaNombre">Nombre del Tipo de Entrada:</label>
+                        <input type="text" id="tipoEntradaNombre" name="tipoEntradaNombre" value="${not empty param.tipoEntradaNombre ? param.tipoEntradaNombre : 'General'}" required>
+                        (Ej: General, VIP, Preventa)
+                    </div>
+                    <div>
+                        <label for="tipoEntradaPrecioBase">Precio Base (€):</label>
+                        <input type="number" id="tipoEntradaPrecioBase" name="tipoEntradaPrecioBase" value="${not empty param.tipoEntradaPrecioBase ? param.tipoEntradaPrecioBase : '25.00'}" step="0.01" min="0" required>
+                    </div>
+                    <div>
+                        <label for="tipoEntradaCantidadTotal">Cantidad Disponible para este Tipo:</label>
+                        <input type="number" id="tipoEntradaCantidadTotal" name="tipoEntradaCantidadTotal" value="${not empty param.tipoEntradaCantidadTotal ? param.tipoEntradaCantidadTotal : '100'}" min="1" required>
+                    </div>
+                     <div>
+                        <label for="tipoEntradaLimiteCompra">Límite de Compra por Usuario (para este tipo):</label>
+                        <input type="number" id="tipoEntradaLimiteCompra" name="tipoEntradaLimiteCompra" value="${not empty param.tipoEntradaLimiteCompra ? param.tipoEntradaLimiteCompra : '10'}" min="1" required>
+                    </div>
+                    <hr/>
 
                     <div>
                         <button type="submit">Crear Evento</button>
