@@ -15,8 +15,8 @@
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
-    <jsp:include page="/WEB-INF/jsp/common/header.jsp" />
-    <jsp:include page="/WEB-INF/jsp/common/navigation.jsp" />
+    <jsp:include page="/jsp/common/header.jsp" />
+    <jsp:include page="/jsp/common/navigation.jsp" />
 
     <div class="container">
         <c:if test="${not empty param.mensaje}">
@@ -33,7 +33,7 @@
             <c:when test="${not empty evento}">
                 <h2>${evento.nombre}</h2>
                 <p><strong>Categoría:</strong> ${evento.categoria}</p>
-                <p><strong>Fecha y Hora:</strong> <fmt:formatDate value="${evento.fechaHora}" type="BOTH" dateStyle="full" timeStyle="medium" /></p>
+               <p><strong>Fecha y Hora:</strong> ${fechaHoraFormateada}</p>
                 <p><strong>Lugar:</strong> ${evento.lugar.nombre} - ${evento.lugar.direccion}</p>
                 <p><strong>Organizador:</strong> ${evento.organizador.nombre}</p>
                 <p><strong>Capacidad Total:</strong> ${evento.capacidadTotal} | <strong>Entradas Vendidas:</strong> ${evento.entradasVendidas} | <strong>Disponibles:</strong> ${evento.capacidadTotal - evento.entradasVendidas}</p>
@@ -102,13 +102,14 @@
                         <label for="cantidad">Cantidad:</label>
                         <input type="number" name="cantidad" value="1" min="1" required>
                         <br/>
-                        <c:if test="${not empty sessionScope.usuarioLogueado && sessionScope.usuarioLogueado.class.simpleName == 'Asistente'}">
+                        <c:if test="${esAsistente}">
                              <button type="submit">Comprar Entradas Seleccionadas</button>
                         </c:if>
                          <c:if test="${empty sessionScope.usuarioLogueado}">
                              <p><a href="${pageContext.request.contextPath}/usuario/login?redirect=${pageContext.request.contextPath}/evento/detalle?id=${evento.id}">Inicie sesión para comprar</a></p>
                         </c:if>
-                         <c:if test="${not empty sessionScope.usuarioLogueado && sessionScope.usuarioLogueado.class.simpleName != 'Asistente'}">
+                         <c:if test="${not esAsistente}">
+
                              <p>Solo los asistentes pueden comprar entradas.</p>
                         </c:if>
                     </form>
@@ -138,6 +139,6 @@
         <p><a href="${pageContext.request.contextPath}/eventos">Volver a la lista de eventos</a></p>
     </div>
 
-    <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+    <jsp:include page="/jsp/common/footer.jsp" />
 </body>
 </html>
