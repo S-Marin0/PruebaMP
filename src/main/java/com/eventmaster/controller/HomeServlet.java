@@ -50,8 +50,8 @@ public class HomeServlet extends HttpServlet {
             // e.printStackTrace(); // Para depuración
         }
 
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/index.jsp"); // Asumiendo que tienes un index.jsp en la raíz de webapp
-        // O si está en WEB-INF/jsp: request.getRequestDispatcher("/WEB-INF/jsp/home.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/index.jsp");
+        // O si está en WEB-INF/jsp: request.getRequestDispatcher("/WEB-INF/jsp/home.jsp"); // Comentario original mantenido por contexto
         dispatcher.forward(request, response);
     }
 }
