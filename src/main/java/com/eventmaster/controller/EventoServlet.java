@@ -585,23 +585,21 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
             // El lugar y organizador no se suelen cambiar en una edición simple.
 
             // Procesar Tipos de Entrada
-            // Guardar una copia de los tipos originales para consultar entradas vendidas y para repoblar el form en caso de error.
-            Map<String, com.eventmaster.model.pattern.factory.TipoEntrada> tiposEntradaOriginales =
+            // 'eventoAEditar' es el objeto cargado de la BD, representa el estado original.
+            Map<String, com.eventmaster.model.pattern.factory.TipoEntrada> tiposEntradaOriginalesAlmacenados =
                 (eventoAEditar.getTiposEntradaDisponibles() != null) ?
                 new HashMap<>(eventoAEditar.getTiposEntradaDisponibles()) :
                 new HashMap<>();
 
-            // Limpiar los tipos de entrada en el objeto eventoAEditar para reconstruir desde el formulario.
-            // El servicio se encargará de la sincronización con el DAO (eliminar los que ya no estén, actualizar/añadir los nuevos).
-            if (eventoAEditar.getTiposEntradaDisponibles() != null) {
-                eventoAEditar.getTiposEntradaDisponibles().clear();
-            } else {
-                // Asegurarse de que el mapa exista en eventoAEditar si era nulo
-                 eventoAEditar.setTiposEntradaDisponibles(new HashMap<>()); // Suponiendo que Evento tiene un setter o el builder lo maneja
+            // Limpiar el mapa en el objeto eventoAEditar para llenarlo con los datos del formulario.
+            // El EventoService se encargará de la sincronización con el DAO.
+            if (eventoAEditar.getTiposEntradaDisponibles() == null) {
+                 eventoAEditar.setTiposEntradaDisponibles(new HashMap<>()); // Asumiendo setter, o modificar Evento para asegurar que nunca sea null
             }
+            eventoAEditar.getTiposEntradaDisponibles().clear();
 
+            boolean primerTipoEntradaValidoIngresado = false;
 
-            boolean primerTipoEntradaValido = false;
             for (int i = 1; i <= 3; i++) {
                 String nombreTipo = request.getParameter("tipoEntradaNombre_" + i);
                 String precioBaseStr = request.getParameter("tipoEntradaPrecioBase_" + i);
@@ -611,134 +609,112 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 if (nombreTipo != null && !nombreTipo.trim().isEmpty()) {
                     try {
                         double precioBase = Double.parseDouble(precioBaseStr);
-                        int cantidadTotal = Integer.parseInt(cantidadTotalStr);
+                        int cantidadTotalForm = Integer.parseInt(cantidadTotalStr);
                         int limiteCompra = Integer.parseInt(limiteCompraStr);
 
-                        if (precioBase >= 0 && cantidadTotal >= 0 && limiteCompra > 0) { // Permitir cantidadTotal 0 para "eliminar" lógicamente si no hay vendidas
-                            // Nota: Si cantidadTotal es 0, podría significar que se quiere eliminar este tipo si no hay entradas vendidas.
-                            // O si la cantidad es menor a las vendidas, se debe impedir o ajustar.
-                            // Esta lógica de validación avanzada (ej. no reducir cantidad total por debajo de vendidas)
-                            // debería estar en el servicio o incluso en el modelo Evento/TipoEntrada.
-                            // Por ahora, el servlet solo pasa los datos.
-                            com.eventmaster.model.pattern.factory.TipoEntrada tipoEntrada =
+                        if (precioBase >= 0 && cantidadTotalForm >= 0 && limiteCompra > 0) { // cantidadTotalForm puede ser 0
+                            com.eventmaster.model.pattern.factory.TipoEntrada tipoProcesado =
                                     new com.eventmaster.model.pattern.factory.TipoEntrada(
                                             nombreTipo,
                                             precioBase,
-                                            cantidadTotal,
-                                            limiteCompra
-                                    );
-                            // Re-establecer las entradas vendidas si el tipo ya existía para no perderlas
-                            // Esta parte es crucial y compleja: necesitamos el estado anterior del TipoEntrada.
-                            // El objeto 'eventoAEditar' fue cargado con sus tipos de entrada, pero los limpiamos.
-                            // Sería mejor obtener el TipoEntrada original del DAO o de una copia antes de limpiar.
-                            // Por simplicidad en este paso, asumimos que EventoService se encargará de la fusión correcta
-                            // o que si un tipo de entrada se "redefine" aquí, es como si fuera nuevo para la lógica del servlet.
-                            com.eventmaster.model.pattern.factory.TipoEntrada tipoEntrada =
-                                    new com.eventmaster.model.pattern.factory.TipoEntrada(
-                                            nombreTipo,
-                                            precioBase,
-                                            cantidadTotal, // Nueva cantidad total del formulario
+                                            cantidadTotalForm,
                                             limiteCompra
                                     );
 
-                            // Preservar entradas vendidas si el tipo de entrada ya existía
-                            com.eventmaster.model.pattern.factory.TipoEntrada originalTipo = tiposEntradaOriginales.get(nombreTipo);
-                            if (originalTipo != null) {
-                                int vendidas = originalTipo.getCantidadTotal() - originalTipo.getCantidadDisponible();
-                                if (cantidadTotal < vendidas) {
-                                    // No se puede reducir la cantidad total por debajo de las ya vendidas
-                                    request.setAttribute("errorEditarEvento", "Para el tipo '" + nombreTipo + "', la nueva cantidad total (" + cantidadTotal + ") no puede ser menor que las entradas ya vendidas (" + vendidas + ").");
-                                    repopularFormularioConErroresDeEdicion(request, eventoAEditar, tiposEntradaOriginales);
+                            com.eventmaster.model.pattern.factory.TipoEntrada originalTipoPersistido = tiposEntradaOriginalesAlmacenados.get(nombreTipo);
+                            if (originalTipoPersistido != null) {
+                                int vendidas = originalTipoPersistido.getCantidadTotal() - originalTipoPersistido.getCantidadDisponible();
+                                if (cantidadTotalForm < vendidas) {
+                                    request.setAttribute("errorEditarEvento", "Para el tipo '" + nombreTipo + "', la nueva cantidad total (" + cantidadTotalForm + ") no puede ser menor que las " + vendidas + " entradas ya vendidas.");
+                                    repopularEditarFormConDatosOriginales(request, eventoAEditar); // Usa el método renombrado/correcto
+                                    request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
                                     return;
                                 }
-                                // La cantidad disponible se recalculará en TipoEntrada basado en la nueva cantidadTotal y las vendidas
-                                // Esto requiere que TipoEntrada tenga un modo de setear vendidas o ajustar disponible post-creación.
-                                // O, el constructor de TipoEntrada debe tomar cantidadDisponible como parámetro.
-                                // Por ahora, TipoEntrada(nombre, precio, cantTotal, limite) setea disponible = cantTotal.
-                                // Necesitamos ajustar esto.
-                                tipoEntrada.reducirDisponibilidad(vendidas); // Simula que las vendidas ya se fueron de la nueva cantidad total
+                                tipoProcesado.reducirDisponibilidad(vendidas);
                             }
 
-                            // Leer y establecer opciones de decorador (similar a procesarCrearEvento)
                             boolean ofreceMerc = "true".equals(request.getParameter("ofreceMercanciaOpcional_" + i));
-                            tipoEntrada.setOfreceMercanciaOpcional(ofreceMerc);
+                            tipoProcesado.setOfreceMercanciaOpcional(ofreceMerc);
                             if (ofreceMerc) {
-                                tipoEntrada.setDescripcionMercancia(request.getParameter("descripcionMercancia_" + i));
+                                tipoProcesado.setDescripcionMercancia(request.getParameter("descripcionMercancia_" + i));
                                 String precioMercStr = request.getParameter("precioAdicionalMercancia_" + i);
                                 if (precioMercStr != null && !precioMercStr.trim().isEmpty()) {
                                     try {
-                                        tipoEntrada.setPrecioAdicionalMercancia(Double.parseDouble(precioMercStr));
+                                        tipoProcesado.setPrecioAdicionalMercancia(Double.parseDouble(precioMercStr));
                                     } catch (NumberFormatException nfe) {
-                                        if (i==1) {request.setAttribute("errorEditarEvento", "Precio de mercancía inválido para Tipo 1."); repopularFormularioConErroresDeEdicion(request, eventoAEditar, tiposEntradaOriginales); return;}
-                                        tipoEntrada.setPrecioAdicionalMercancia(0.0); // Default
+                                        request.setAttribute("errorEditarEvento", "Precio de mercancía inválido para Tipo de Entrada " + i + ".");
+                                        repopularEditarFormConDatosOriginales(request, eventoAEditar);
+                                        request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                                        return;
                                     }
-                                } else if (i==1) { request.setAttribute("errorEditarEvento", "Precio de mercancía requerido para Tipo 1 si se ofrece."); repopularFormularioConErroresDeEdicion(request, eventoAEditar, tiposEntradaOriginales); return;}
-                                  else tipoEntrada.setPrecioAdicionalMercancia(0.0);
+                                } else {
+                                    request.setAttribute("errorEditarEvento", "Precio de mercancía requerido para Tipo de Entrada " + i + " si se ofrece mercancía.");
+                                    repopularEditarFormConDatosOriginales(request, eventoAEditar);
+                                    request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                                    return;
+                                }
                             } else {
-                                tipoEntrada.setDescripcionMercancia(null);
-                                tipoEntrada.setPrecioAdicionalMercancia(0.0);
+                                tipoProcesado.setDescripcionMercancia(null);
+                                tipoProcesado.setPrecioAdicionalMercancia(0.0);
                             }
 
                             boolean ofreceDesc = "true".equals(request.getParameter("ofreceDescuentoOpcional_" + i));
-                            tipoEntrada.setOfreceDescuentoOpcional(ofreceDesc);
+                            tipoProcesado.setOfreceDescuentoOpcional(ofreceDesc);
                             if (ofreceDesc) {
-                                tipoEntrada.setDescripcionDescuento(request.getParameter("descripcionDescuento_" + i));
+                                tipoProcesado.setDescripcionDescuento(request.getParameter("descripcionDescuento_" + i));
                                 String montoDescStr = request.getParameter("montoDescuentoFijo_" + i);
-                                 if (montoDescStr != null && !montoDescStr.trim().isEmpty()) {
+                                if (montoDescStr != null && !montoDescStr.trim().isEmpty()) {
                                     try {
-                                        tipoEntrada.setMontoDescuentoFijo(Double.parseDouble(montoDescStr));
+                                        tipoProcesado.setMontoDescuentoFijo(Double.parseDouble(montoDescStr));
                                     } catch (NumberFormatException nfe) {
-                                        if (i==1) {request.setAttribute("errorEditarEvento", "Monto de descuento inválido para Tipo 1."); repopularFormularioConErroresDeEdicion(request, eventoAEditar, tiposEntradaOriginales); return;}
-                                        tipoEntrada.setMontoDescuentoFijo(0.0); // Default
+                                        request.setAttribute("errorEditarEvento", "Monto de descuento inválido para Tipo de Entrada " + i + ".");
+                                        repopularEditarFormConDatosOriginales(request, eventoAEditar);
+                                        request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                                        return;
                                     }
-                                } else if (i==1) {request.setAttribute("errorEditarEvento", "Monto de descuento requerido para Tipo 1 si se ofrece."); repopularFormularioConErroresDeEdicion(request, eventoAEditar, tiposEntradaOriginales); return;}
-                                  else tipoEntrada.setMontoDescuentoFijo(0.0);
+                                } else {
+                                     request.setAttribute("errorEditarEvento", "Monto de descuento requerido para Tipo de Entrada " + i + " si se ofrece descuento.");
+                                     repopularEditarFormConDatosOriginales(request, eventoAEditar);
+                                     request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                                     return;
+                                }
                             } else {
-                                tipoEntrada.setDescripcionDescuento(null);
-                                tipoEntrada.setMontoDescuentoFijo(0.0);
+                                tipoProcesado.setDescripcionDescuento(null);
+                                tipoProcesado.setMontoDescuentoFijo(0.0);
                             }
 
-                            eventoAEditar.agregarTipoEntrada(nombreTipo, tipoEntrada);
-                            System.out.println("EventoServlet#procesarEditarEvento: Tipo de entrada '" + nombreTipo + "' preparado para actualizar/añadir. Merc: "+ofreceMerc+", Desc: "+ofreceDesc);
-                            if (i == 1) primerTipoEntradaValido = true;
+                            eventoAEditar.agregarTipoEntrada(nombreTipo, tipoProcesado);
+                            if (i == 1) primerTipoEntradaValidoIngresado = true;
+                            System.out.println("EventoServlet#procesarEditarEvento: Tipo de entrada '" + nombreTipo + "' procesado. Merc: "+ofreceMerc+", Desc: "+ofreceDesc);
 
-                        } else if (i == 1) { // Si los datos numéricos base del tipo 1 son inválidos
-                            request.setAttribute("errorEditarEvento", "Valores numéricos inválidos para el Tipo de Entrada 1.");
-                            // Re-poblar el formulario como en mostrarFormularioEditarEvento
-                            request.setAttribute("evento", eventoAEditar); // Pasar el objeto original por si se necesitan sus datos
-                            if (eventoAEditar.getFechaHora() != null) { request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));}
-                            repopularTiposDeEntradaParaFormularioError(request, eventoAEditar);
+                        } else if (i == 1) {
+                            request.setAttribute("errorEditarEvento", "Valores numéricos base inválidos para el Tipo de Entrada 1 (precio, cantidad >= 0, límite > 0).");
+                            repopularEditarFormConDatosOriginales(request, eventoAEditar);
                             request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
                             return;
+                        } else {
+                             System.out.println("EventoServlet#procesarEditarEvento: Tipo opcional " + i + " con nombre '" + nombreTipo + "' tiene datos numéricos base inválidos. Se omite.");
                         }
                     } catch (NumberFormatException e) {
-                        if (i == 1 || (nombreTipo != null && !nombreTipo.trim().isEmpty())) {
-                           request.setAttribute("errorEditarEvento", "Error en el formato numérico para el Tipo de Entrada " + i + ".");
-                           request.setAttribute("evento", eventoAEditar);
-                           if (eventoAEditar.getFechaHora() != null) { request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));}
-                           repopularTiposDeEntradaParaFormularioError(request, eventoAEditar); // Necesitamos repoblar con lo que venía del evento
-                           request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
-                           return;
-                        }
+                        request.setAttribute("errorEditarEvento", "Error en el formato numérico para los datos base del Tipo de Entrada " + i + ".");
+                        repopularEditarFormConDatosOriginales(request, eventoAEditar);
+                        request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                        return;
                     }
                 } else if (i == 1) {
                     request.setAttribute("errorEditarEvento", "El nombre para el Tipo de Entrada 1 es obligatorio.");
-                    request.setAttribute("evento", eventoAEditar);
-                    if (eventoAEditar.getFechaHora() != null) { request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));}
-                    repopularTiposDeEntradaParaFormularioError(request, eventoAEditar);
+                    repopularEditarFormConDatosOriginales(request, eventoAEditar);
                     request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
                     return;
                 }
             }
-             if (!primerTipoEntradaValido && (eventoAEditar.getTiposEntradaDisponibles() == null || eventoAEditar.getTiposEntradaDisponibles().isEmpty())) {
+
+            if (!primerTipoEntradaValidoIngresado) {
                  request.setAttribute("errorEditarEvento", "Debe definir al menos el Tipo de Entrada 1 correctamente.");
-                 request.setAttribute("evento", eventoAEditar);
-                 if (eventoAEditar.getFechaHora() != null) { request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));}
-                 repopularTiposDeEntradaParaFormularioError(request, eventoAEditar);
+                 repopularEditarFormConDatosOriginales(request, eventoAEditar);
                  request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
                  return;
             }
-
 
             eventoService.actualizarEvento(eventoAEditar);
 
