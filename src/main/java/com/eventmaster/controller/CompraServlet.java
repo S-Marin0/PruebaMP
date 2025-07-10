@@ -30,6 +30,7 @@ public class CompraServlet extends HttpServlet {
 
     private EventoService eventoService;
     private ProcesoCompraFacade procesoCompraFacade;
+    private UsuarioService usuarioService; // Campo añadido
     // private CommandInvoker commandInvoker; // O se obtiene del Asistente
 
     @Override
@@ -38,6 +39,7 @@ public class CompraServlet extends HttpServlet {
         ServletContext context = getServletContext();
         eventoService = (EventoService) context.getAttribute("eventoService");
         procesoCompraFacade = (ProcesoCompraFacade) context.getAttribute("procesoCompraFacade");
+        usuarioService = (UsuarioService) context.getAttribute("usuarioService"); // Inicialización añadida
         // commandInvoker = (CommandInvoker) context.getAttribute("globalCommandInvoker"); // Si hay uno global
 
         if (eventoService == null) {
@@ -45,6 +47,9 @@ public class CompraServlet extends HttpServlet {
         }
         if (procesoCompraFacade == null) {
             throw new ServletException("ProcesoCompraFacade no disponible.");
+        }
+        if (usuarioService == null) { // Verificación añadida
+            throw new ServletException("UsuarioService no disponible.");
         }
     }
 
