@@ -335,7 +335,8 @@ public class UsuarioServlet extends HttpServlet {
         // }
 
         try {
-            usuarioService.actualizarUsuario(asistente); // Asumiendo que esto guarda el estado completo del Asistente, incluyendo su NotificacionConfig
+            // Usar registrarUsuario, ya que también maneja actualizaciones.
+            usuarioService.registrarUsuario(asistente);
             // Actualizar el objeto en sesión también
             session.setAttribute("usuarioLogueado", asistente);
             response.sendRedirect(request.getContextPath() + "/usuario/perfil?mensaje=Preferencias de notificación actualizadas con éxito.");
