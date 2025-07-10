@@ -69,6 +69,22 @@
                         <label for="tipoEntradaLimiteCompra_1">Límite Compra Usuario Tipo 1:</label>
                         <input type="number" id="tipoEntradaLimiteCompra_1" name="tipoEntradaLimiteCompra_1" value="${not empty param.tipoEntradaLimiteCompra_1 ? param.tipoEntradaLimiteCompra_1 : '10'}" min="1" required>
                     </div>
+                    <div>
+                        <input type="checkbox" id="ofreceMercanciaOpcional_1" name="ofreceMercanciaOpcional_1" value="true" ${param.ofreceMercanciaOpcional_1 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceMercanciaOpcional_1">Ofrecer Mercancía Opcional</label><br/>
+                        <label for="descripcionMercancia_1">Descripción Mercancía Tipo 1:</label>
+                        <input type="text" id="descripcionMercancia_1" name="descripcionMercancia_1" value="${param.descripcionMercancia_1}"><br/>
+                        <label for="precioAdicionalMercancia_1">Precio Adicional Mercancía Tipo 1 (€):</label>
+                        <input type="number" id="precioAdicionalMercancia_1" name="precioAdicionalMercancia_1" value="${param.precioAdicionalMercancia_1}" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ofreceDescuentoOpcional_1" name="ofreceDescuentoOpcional_1" value="true" ${param.ofreceDescuentoOpcional_1 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceDescuentoOpcional_1">Ofrecer Descuento Opcional</label><br/>
+                        <label for="descripcionDescuento_1">Descripción Descuento Tipo 1:</label>
+                        <input type="text" id="descripcionDescuento_1" name="descripcionDescuento_1" value="${param.descripcionDescuento_1}"><br/>
+                        <label for="montoDescuentoFijo_1">Monto Descuento Fijo Tipo 1 (€):</label>
+                        <input type="number" id="montoDescuentoFijo_1" name="montoDescuentoFijo_1" value="${param.montoDescuentoFijo_1}" step="0.01" min="0">
+                    </div>
                     <br/>
 
                     <%-- Tipo de Entrada 2 (Opcional) --%>
@@ -89,6 +105,22 @@
                         <label for="tipoEntradaLimiteCompra_2">Límite Compra Usuario Tipo 2:</label>
                         <input type="number" id="tipoEntradaLimiteCompra_2" name="tipoEntradaLimiteCompra_2" value="${param.tipoEntradaLimiteCompra_2}" min="0">
                     </div>
+                    <div>
+                        <input type="checkbox" id="ofreceMercanciaOpcional_2" name="ofreceMercanciaOpcional_2" value="true" ${param.ofreceMercanciaOpcional_2 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceMercanciaOpcional_2">Ofrecer Mercancía Opcional</label><br/>
+                        <label for="descripcionMercancia_2">Descripción Mercancía Tipo 2:</label>
+                        <input type="text" id="descripcionMercancia_2" name="descripcionMercancia_2" value="${param.descripcionMercancia_2}"><br/>
+                        <label for="precioAdicionalMercancia_2">Precio Adicional Mercancía Tipo 2 (€):</label>
+                        <input type="number" id="precioAdicionalMercancia_2" name="precioAdicionalMercancia_2" value="${param.precioAdicionalMercancia_2}" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ofreceDescuentoOpcional_2" name="ofreceDescuentoOpcional_2" value="true" ${param.ofreceDescuentoOpcional_2 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceDescuentoOpcional_2">Ofrecer Descuento Opcional</label><br/>
+                        <label for="descripcionDescuento_2">Descripción Descuento Tipo 2:</label>
+                        <input type="text" id="descripcionDescuento_2" name="descripcionDescuento_2" value="${param.descripcionDescuento_2}"><br/>
+                        <label for="montoDescuentoFijo_2">Monto Descuento Fijo Tipo 2 (€):</label>
+                        <input type="number" id="montoDescuentoFijo_2" name="montoDescuentoFijo_2" value="${param.montoDescuentoFijo_2}" step="0.01" min="0">
+                    </div>
                     <br/>
 
                     <%-- Tipo de Entrada 3 (Opcional) --%>
@@ -108,6 +140,22 @@
                      <div>
                         <label for="tipoEntradaLimiteCompra_3">Límite Compra Usuario Tipo 3:</label>
                         <input type="number" id="tipoEntradaLimiteCompra_3" name="tipoEntradaLimiteCompra_3" value="${param.tipoEntradaLimiteCompra_3}" min="0">
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ofreceMercanciaOpcional_3" name="ofreceMercanciaOpcional_3" value="true" ${param.ofreceMercanciaOpcional_3 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceMercanciaOpcional_3">Ofrecer Mercancía Opcional</label><br/>
+                        <label for="descripcionMercancia_3">Descripción Mercancía Tipo 3:</label>
+                        <input type="text" id="descripcionMercancia_3" name="descripcionMercancia_3" value="${param.descripcionMercancia_3}"><br/>
+                        <label for="precioAdicionalMercancia_3">Precio Adicional Mercancía Tipo 3 (€):</label>
+                        <input type="number" id="precioAdicionalMercancia_3" name="precioAdicionalMercancia_3" value="${param.precioAdicionalMercancia_3}" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ofreceDescuentoOpcional_3" name="ofreceDescuentoOpcional_3" value="true" ${param.ofreceDescuentoOpcional_3 == 'true' ? 'checked' : ''}>
+                        <label for="ofreceDescuentoOpcional_3">Ofrecer Descuento Opcional</label><br/>
+                        <label for="descripcionDescuento_3">Descripción Descuento Tipo 3:</label>
+                        <input type="text" id="descripcionDescuento_3" name="descripcionDescuento_3" value="${param.descripcionDescuento_3}"><br/>
+                        <label for="montoDescuentoFijo_3">Monto Descuento Fijo Tipo 3 (€):</label>
+                        <input type="number" id="montoDescuentoFijo_3" name="montoDescuentoFijo_3" value="${param.montoDescuentoFijo_3}" step="0.01" min="0">
                     </div>
                     <hr/>
 

@@ -177,9 +177,21 @@ public class CompraServlet extends HttpServlet {
         session.setAttribute("compraEnProgresoEventoId", eventoId);
         session.setAttribute("compraEnProgresoTipoEntradaNombre", tipoEntradaNombre);
         session.setAttribute("compraEnProgresoCantidad", cantidad);
-        session.setAttribute("compraEnProgresoPrecioUnitario", tipoEntradaDef.getPrecioBase()); // Precio base antes de promos
+        session.setAttribute("compraEnProgresoPrecioUnitario", tipoEntradaDef.getPrecioBase()); // Precio base del TipoEntrada seleccionado
 
-        System.out.println("CompraServlet: Inicio de compra procesado. Redirigiendo a confirmación.");
+        // Leer y guardar estado de los decoradores
+        boolean decoradorMercanciaSeleccionado = "true".equalsIgnoreCase(request.getParameter("decorador_mercancia"));
+        boolean decoradorDescuentoSeleccionado = "true".equalsIgnoreCase(request.getParameter("decorador_descuento"));
+
+        session.setAttribute("compraEnProgresoDecoradorMercancia", decoradorMercanciaSeleccionado);
+        session.setAttribute("compraEnProgresoDecoradorDescuento", decoradorDescuentoSeleccionado);
+
+        System.out.println("CompraServlet: Inicio de compra procesado. EventoID: " + eventoId +
+                           ", TipoEntrada: " + tipoEntradaNombre +
+                           ", Cantidad: " + cantidad +
+                           ", Mercancia: " + decoradorMercanciaSeleccionado +
+                           ", Descuento: " + decoradorDescuentoSeleccionado +
+                           ". Redirigiendo a confirmación.");
         response.sendRedirect(request.getContextPath() + "/compra/confirmar");
     }
 
@@ -220,10 +232,13 @@ public class CompraServlet extends HttpServlet {
         String eventoId = (String) session.getAttribute("compraEnProgresoEventoId");
         String tipoEntradaNombre = (String) session.getAttribute("compraEnProgresoTipoEntradaNombre");
         Integer cantidad = (Integer) session.getAttribute("compraEnProgresoCantidad");
-        // Double precioUnitario = (Double) session.getAttribute("compraEnProgresoPrecioUnitario");
+        Boolean decoradorMercancia = (Boolean) session.getAttribute("compraEnProgresoDecoradorMercancia");
+        Boolean decoradorDescuento = (Boolean) session.getAttribute("compraEnProgresoDecoradorDescuento");
 
-        if (eventoId == null || tipoEntradaNombre == null || cantidad == null) {
-            response.sendRedirect(request.getContextPath() + "/eventos?error=Datos de compra en sesión inválidos. Intente de nuevo.");
+        // Double precioUnitario = (Double) session.getAttribute("compraEnProgresoPrecioUnitario"); // No se usa aquí directamente para el facade
+
+        if (eventoId == null || tipoEntradaNombre == null || cantidad == null || decoradorMercancia == null || decoradorDescuento == null) {
+            response.sendRedirect(request.getContextPath() + "/eventos?error=Datos de compra en sesión inválidos o incompletos. Intente de nuevo.");
             return;
         }
 
@@ -239,7 +254,14 @@ public class CompraServlet extends HttpServlet {
 
         // Usar el Facade para el proceso completo
         Compra compraRealizada = procesoCompraFacade.ejecutarProcesoCompra(
-            asistente, eventoId, tipoEntradaNombre, cantidad, detallesPago, codigoDescuento
+            asistente,
+            eventoId,
+            tipoEntradaNombre,
+            cantidad,
+            detallesPago,
+            codigoDescuento,
+            decoradorMercancia, // Nuevo parámetro
+            decoradorDescuento  // Nuevo parámetro
         );
 
         // Limpiar atributos de sesión de compra en progreso
@@ -247,6 +269,9 @@ public class CompraServlet extends HttpServlet {
         session.removeAttribute("compraEnProgresoTipoEntradaNombre");
         session.removeAttribute("compraEnProgresoCantidad");
         session.removeAttribute("compraEnProgresoPrecioUnitario");
+        session.removeAttribute("compraEnProgresoDecoradorMercancia"); // Limpiar nuevos atributos
+        session.removeAttribute("compraEnProgresoDecoradorDescuento"); // Limpiar nuevos atributos
+
 
         if (compraRealizada != null && "COMPLETADA".equals(compraRealizada.getEstadoCompra())) {
             // Opcional: guardar la compra en sesión si se va a mostrar inmediatamente después,
