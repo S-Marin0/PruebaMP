@@ -27,15 +27,18 @@ public class EventoService {
             throw new IllegalArgumentException("El evento no puede ser nulo.");
         }
         // Aquí se podrían añadir validaciones de negocio antes de guardar
-        Evento eventoGuardado = eventoDAO.save(evento);
+        Evento eventoGuardado = eventoDAO.save(evento); // Guarda el evento principal
         System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' registrado en el sistema con ID: " + eventoGuardado.getId());
 
         // Guardar las definiciones de TipoEntrada asociadas al evento
-        if (evento.getTiposEntradaDisponibles() != null) {
+        if (evento.getTiposEntradaDisponibles() != null && !evento.getTiposEntradaDisponibles().isEmpty()) { // Modificación: verificar si no está vacío
             for (Map.Entry<String, TipoEntrada> entry : evento.getTiposEntradaDisponibles().entrySet()) {
+                // Asumiendo que TipoEntradaDAO.save asocia el TipoEntrada con el eventoId.
                 tipoEntradaDAO.save(eventoGuardado.getId(), entry.getValue());
             }
             System.out.println("EventoService: Tipos de entrada para '" + eventoGuardado.getNombre() + "' guardados.");
+        } else {
+            System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' registrado sin tipos de entrada definidos.");
         }
         return eventoGuardado;
     }
@@ -84,12 +87,16 @@ public class EventoService {
         // Primero, podríamos eliminar todos los TipoEntrada existentes para este eventoId (si la interfaz lo permite fácilmente)
         // o cargarlos y compararlos.
         // Para la simulación, vamos a guardar/actualizar cada uno.
+
+        // Lógica actual:
         if (eventoGuardado.getTiposEntradaDisponibles() != null) {
             for (Map.Entry<String, TipoEntrada> entry : eventoGuardado.getTiposEntradaDisponibles().entrySet()) {
                 tipoEntradaDAO.save(eventoGuardado.getId(), entry.getValue());
             }
+            System.out.println("EventoService: Tipos de entrada para '" + eventoGuardado.getNombre() + "' (re)guardados/actualizados.");
+        } else {
+            System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' actualizado, no se procesaron tipos de entrada (mapa nulo o vacío en el objeto evento).");
         }
-        System.out.println("EventoService: Evento '" + eventoGuardado.getNombre() + "' y sus tipos de entrada actualizados.");
         return eventoGuardado;
     }
 
@@ -97,11 +104,17 @@ public class EventoService {
     private void cargarTiposDeEntradaParaEvento(Evento evento) {
         if (evento != null && evento.getId() != null) {
             List<TipoEntrada> tipos = tipoEntradaDAO.findAllByEventoId(evento.getId());
-            // Limpiar el mapa existente y rellenarlo, o la implementación de Evento.addTipoEntrada se encarga.
-            // evento.getTiposEntradaDisponibles().clear(); // Si queremos reemplazar siempre.
-            for (TipoEntrada te : tipos) {
-                evento.agregarTipoEntrada(te.getNombreTipo(), te);
+
+            if (evento.getTiposEntradaDisponibles() == null) {
+                 // No debería pasar si el constructor de Evento y el builder lo inicializan.
+            } else {
+                 evento.getTiposEntradaDisponibles().clear(); // Limpiar para asegurar que solo tenemos los del DAO
             }
+
+            for (TipoEntrada te : tipos) {
+                evento.agregarTipoEntrada(te.getNombreTipo(), te); // Asumiendo que Evento tiene este método
+            }
+            System.out.println("EventoService: Cargados " + tipos.size() + " tipos de entrada para evento ID " + evento.getId());
         }
     }
 

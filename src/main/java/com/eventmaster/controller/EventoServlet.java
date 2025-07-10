@@ -278,8 +278,28 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 .setCategoria(categoria)
                 .setCapacidadTotal(capacidad > 0 ? capacidad : lugarSimulado.obtenerCapacidadTotal());
 
-            // Aquí se podrían añadir Tipos de Entrada desde el formulario
-            // Ejemplo: builder.addTipoEntrada("General", new com.eventmaster.model.pattern.factory.TipoEntrada("General", 25.00, 100, 5));
+            // Leer datos del tipo de entrada principal del formulario
+            String tipoEntradaNombre = request.getParameter("tipoEntradaNombre");
+            double tipoEntradaPrecioBase = Double.parseDouble(request.getParameter("tipoEntradaPrecioBase"));
+            int tipoEntradaCantidadTotal = Integer.parseInt(request.getParameter("tipoEntradaCantidadTotal"));
+            int tipoEntradaLimiteCompra = Integer.parseInt(request.getParameter("tipoEntradaLimiteCompra"));
+
+            if (tipoEntradaNombre != null && !tipoEntradaNombre.trim().isEmpty() && tipoEntradaPrecioBase >= 0 && tipoEntradaCantidadTotal > 0 && tipoEntradaLimiteCompra > 0) {
+                com.eventmaster.model.pattern.factory.TipoEntrada tipoEntradaPrincipal =
+                        new com.eventmaster.model.pattern.factory.TipoEntrada(
+                                tipoEntradaNombre,
+                                tipoEntradaPrecioBase,
+                                tipoEntradaCantidadTotal,
+                                tipoEntradaLimiteCompra
+                        );
+                builder.addTipoEntrada(tipoEntradaNombre, tipoEntradaPrincipal);
+                System.out.println("EventoServlet: Añadido tipo de entrada '" + tipoEntradaNombre + "' al evento '" + nombre + "'.");
+            } else {
+                // Opcional: ¿Qué hacer si los datos del tipo de entrada son inválidos o no se proporcionan?
+                // Podríamos lanzar un error, o crear el evento sin tipos de entrada, o con uno por defecto.
+                // Por ahora, si no son válidos, el evento se creará sin este tipo de entrada.
+                 System.out.println("EventoServlet: Datos para el tipo de entrada principal no proporcionados o inválidos para el evento '" + nombre + "'.");
+            }
 
             Evento eventoParaGuardar = builder.build(); // Construir el evento primero
             Evento eventoGuardado = eventoService.registrarNuevoEvento(eventoParaGuardar); // Luego pasarlo al servicio
