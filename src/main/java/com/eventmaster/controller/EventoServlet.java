@@ -166,6 +166,12 @@ public class EventoServlet extends HttpServlet {
     }
 
     request.setAttribute("listaEventosConFecha", eventosConFecha);
+    System.out.println("EventoServlet.listarEventos: Número de eventos recuperados para listar: " + (listaEventos != null ? listaEventos.size() : "null")); // Log
+    if (listaEventos != null && !listaEventos.isEmpty()) {
+        for (Evento ev : listaEventos) {
+            System.out.println("EventoServlet.listarEventos: Evento en lista: ID=" + ev.getId() + ", Nombre=" + ev.getNombre()); // Log
+        }
+    }
 
     RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/evento/listaEventos.jsp");
     dispatcher.forward(request, response);
@@ -184,8 +190,10 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
     }
 
     Optional<Evento> eventoOpt = eventoService.findEventoById(idEvento);
+    System.out.println("EventoServlet.verDetalleEvento: Buscando evento con ID: " + idEvento + ". Encontrado: " + eventoOpt.isPresent()); // Log
     if (eventoOpt.isPresent()) {
         Evento evento = eventoOpt.get();
+        System.out.println("EventoServlet.verDetalleEvento: Mostrando detalle para evento: " + evento.getNombre()); // Log
         request.setAttribute("evento", evento);
 
         // ✅ Formatear la fecha a texto (ejemplo: "miércoles, 10 de julio de 2025 21:30")
@@ -273,8 +281,9 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
             Evento eventoParaGuardar = builder.build(); // Construir el evento primero
             Evento eventoGuardado = eventoService.registrarNuevoEvento(eventoParaGuardar); // Luego pasarlo al servicio
 
+            System.out.println("EventoServlet.procesarCrearEvento: Evento procesado. ID del evento guardado: " + eventoGuardado.getId() + ". Nombre: " + eventoGuardado.getNombre()); // Log
+            System.out.println("EventoServlet.procesarCrearEvento: Redirigiendo a /evento/detalle?id=" + eventoGuardado.getId()); // Log
 
-            System.out.println("EventoServlet: Evento creado con ID: " + eventoGuardado.getId());
             response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoGuardado.getId() + "&mensaje=Evento creado exitosamente");
 
         } catch (DateTimeParseException e) {
@@ -291,30 +300,192 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
 
     private void mostrarFormularioEditarEvento(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Similar a mostrarFormularioCrearEvento, pero carga los datos del evento existente
-        // y verifica permisos.
-        // ... (implementación omitida por brevedad, pero seguiría el patrón)
-        request.setAttribute("errorGeneral", "Funcionalidad Editar Evento (GET) no implementada completamente.");
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
-        dispatcher.forward(request, response);
+        HttpSession session = request.getSession(false);
+        Usuario usuarioLogueado = (session != null) ? (Usuario) session.getAttribute("usuarioLogueado") : null;
+
+        if (!(usuarioLogueado instanceof Organizador)) {
+            response.sendRedirect(request.getContextPath() + "/usuario/login?mensaje=Acceso denegado. Debe ser organizador.");
+            return;
+        }
+
+        String eventoId = request.getParameter("id");
+        if (eventoId == null || eventoId.trim().isEmpty()) {
+            request.setAttribute("errorGeneral", "ID de evento no proporcionado para editar.");
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        Optional<Evento> eventoOpt = eventoService.findEventoById(eventoId);
+        if (!eventoOpt.isPresent()) {
+            request.setAttribute("errorGeneral", "Evento no encontrado para editar con ID: " + eventoId);
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        Evento evento = eventoOpt.get();
+        // Verificar si el usuario logueado es el organizador del evento
+        if (!evento.getOrganizador().getId().equals(usuarioLogueado.getId())) {
+            request.setAttribute("errorGeneral", "No tiene permiso para editar este evento.");
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        request.setAttribute("evento", evento);
+        // Para el formato de fecha en el input datetime-local
+        if (evento.getFechaHora() != null) {
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            request.setAttribute("fechaHoraInput", evento.getFechaHora().format(inputFormatter));
+        }
+
+        request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
     }
 
     private void procesarEditarEvento(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Similar a procesarCrearEvento, pero actualiza un evento existente.
-        // ... (implementación omitida por brevedad)
-        request.setAttribute("errorGeneral", "Funcionalidad Editar Evento (POST) no implementada completamente.");
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
-        dispatcher.forward(request, response);
+        HttpSession session = request.getSession(false);
+        Usuario usuarioLogueado = (session != null) ? (Usuario) session.getAttribute("usuarioLogueado") : null;
+
+        if (!(usuarioLogueado instanceof Organizador)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado.");
+            return;
+        }
+
+        String eventoId = request.getParameter("eventoId"); // ID del evento a editar
+
+        if (eventoId == null || eventoId.trim().isEmpty()) {
+            request.setAttribute("errorEditarEvento", "ID de evento no proporcionado.");
+            // Reenviar al formulario de alguna manera o a una página de error.
+            // Como no tenemos los datos del evento aquí, es mejor ir a error general.
+            request.setAttribute("errorGeneral", "ID de evento no fue enviado para la actualización.");
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        // Es crucial recargar el evento para asegurarse de que el usuario tiene permiso
+        // y para tener el objeto original antes de aplicar cambios.
+        Optional<Evento> eventoOpt = eventoService.findEventoById(eventoId);
+        if (!eventoOpt.isPresent()) {
+            request.setAttribute("errorGeneral", "Evento a editar no encontrado con ID: " + eventoId);
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        Evento eventoAEditar = eventoOpt.get();
+
+        if (!eventoAEditar.getOrganizador().getId().equals(usuarioLogueado.getId())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tiene permiso para editar este evento.");
+            return;
+        }
+
+        try {
+            String nombre = request.getParameter("nombre");
+            String descripcion = request.getParameter("descripcion");
+            String categoria = request.getParameter("categoria");
+            String fechaHoraStr = request.getParameter("fechaHora"); // Formato esperado: YYYY-MM-DDTHH:MM
+            int capacidad = Integer.parseInt(request.getParameter("capacidad"));
+
+            // Validaciones básicas
+            if (nombre == null || nombre.trim().isEmpty() || fechaHoraStr == null || fechaHoraStr.trim().isEmpty()) {
+                request.setAttribute("errorEditarEvento", "Nombre y Fecha/Hora son obligatorios.");
+                request.setAttribute("evento", eventoAEditar); // Reenviar datos originales al form
+                 if (eventoAEditar.getFechaHora() != null) {
+                    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                    request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
+                }
+                request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                return;
+            }
+            LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr);
+
+            // Actualizar los campos del evento existente
+            eventoAEditar.setNombre(nombre);
+            eventoAEditar.setDescripcion(descripcion);
+            eventoAEditar.setCategoria(categoria);
+            eventoAEditar.setFechaHora(fechaHora);
+            eventoAEditar.setCapacidadTotal(capacidad);
+            // El lugar y organizador no se suelen cambiar en una edición simple,
+            // pero si fuera necesario, se añadirían aquí.
+            // Nota: El Evento.Lugar es simulado en la creación, aquí no se toca.
+
+            eventoService.actualizarEvento(eventoAEditar);
+
+            System.out.println("EventoServlet: Evento actualizado con ID: " + eventoAEditar.getId());
+            response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoAEditar.getId() + "&mensaje=Evento actualizado exitosamente");
+
+        } catch (DateTimeParseException e) {
+            request.setAttribute("errorEditarEvento", "Formato de Fecha/Hora inválido. Use YYYY-MM-DDTHH:MM");
+            request.setAttribute("evento", eventoAEditar); // Reenviar datos originales
+            if (eventoAEditar.getFechaHora() != null) {
+                DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
+            }
+            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+        } catch (NumberFormatException e) {
+            request.setAttribute("errorEditarEvento", "Capacidad debe ser un número.");
+            request.setAttribute("evento", eventoAEditar); // Reenviar datos originales
+             if (eventoAEditar.getFechaHora() != null) {
+                DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
+            }
+            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            request.setAttribute("errorEditarEvento", "Error al actualizar evento: " + e.getMessage());
+            request.setAttribute("evento", eventoAEditar); // Reenviar datos originales
+             if (eventoAEditar.getFechaHora() != null) {
+                DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
+            }
+            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+        }
     }
 
     private void procesarEliminarEvento(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Obtener ID del evento, verificar permisos, llamar a EventoService.eliminarEventoRegistrado
-        // ... (implementación omitida por brevedad)
-        request.setAttribute("errorGeneral", "Funcionalidad Eliminar Evento (POST) no implementada completamente.");
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
-        dispatcher.forward(request, response);
+        HttpSession session = request.getSession(false);
+        Usuario usuarioLogueado = (session != null) ? (Usuario) session.getAttribute("usuarioLogueado") : null;
+
+        if (!(usuarioLogueado instanceof Organizador)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado. Debe ser organizador.");
+            return;
+        }
+
+        String eventoId = request.getParameter("eventoId"); // Obtenido del campo oculto del formulario
+
+        if (eventoId == null || eventoId.trim().isEmpty()) {
+            request.setAttribute("errorGeneral", "ID de evento no proporcionado para eliminar.");
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        Optional<Evento> eventoOpt = eventoService.findEventoById(eventoId);
+        if (!eventoOpt.isPresent()) {
+            request.setAttribute("errorGeneral", "Evento no encontrado para eliminar con ID: " + eventoId);
+            // Podríamos redirigir a la lista de eventos si el evento ya no existe.
+            response.sendRedirect(request.getContextPath() + "/eventos?mensaje=Evento no encontrado o ya eliminado.");
+            return;
+        }
+
+        Evento eventoAEliminar = eventoOpt.get();
+
+        // Verificar si el usuario logueado es el organizador del evento
+        if (!eventoAEliminar.getOrganizador().getId().equals(usuarioLogueado.getId())) {
+            request.setAttribute("errorGeneral", "No tiene permiso para eliminar este evento.");
+            // Es mejor no dar demasiada información, simplemente redirigir o mostrar error.
+             response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tiene permiso para eliminar este evento.");
+            return;
+        }
+
+        try {
+            eventoService.eliminarEventoRegistrado(eventoAEliminar);
+            System.out.println("EventoServlet: Evento eliminado con ID: " + eventoId);
+            response.sendRedirect(request.getContextPath() + "/eventos?mensaje=Evento '" + eventoAEliminar.getNombre() + "' eliminado exitosamente.");
+        } catch (Exception e) {
+            System.err.println("EventoServlet: Error al eliminar evento ID " + eventoId + " - " + e.getMessage());
+            e.printStackTrace();
+            // Si hay un error, podría ser útil redirigir a la página de detalles del evento
+            // o a la lista con un mensaje de error específico.
+            response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&errorEliminar=Error al intentar eliminar el evento: " + e.getMessage());
+        }
     }
 
 }

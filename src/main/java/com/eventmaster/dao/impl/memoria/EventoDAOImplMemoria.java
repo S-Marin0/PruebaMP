@@ -24,7 +24,10 @@ public class EventoDAOImplMemoria implements EventoDAO {
     public Optional<Evento> findById(String id) {
         lock.readLock().lock();
         try {
-            return Optional.ofNullable(eventosMap.get(id));
+            Evento evento = eventosMap.get(id);
+            System.out.println("EventoDAOImplMemoria.findById: Buscando evento con ID: " + id + ". Encontrado: " + (evento != null ? evento.getNombre() : "No")); // Log
+            System.out.println("EventoDAOImplMemoria.findById: Contenido actual del mapa: " + eventosMap.keySet()); // Log para ver todos los IDs
+            return Optional.ofNullable(evento);
         } finally {
             lock.readLock().unlock();
         }
@@ -34,6 +37,8 @@ public class EventoDAOImplMemoria implements EventoDAO {
     public List<Evento> findAll() {
         lock.readLock().lock();
         try {
+            System.out.println("EventoDAOImplMemoria.findAll: Recuperando todos los eventos. Número de eventos: " + eventosMap.size()); // Log
+            System.out.println("EventoDAOImplMemoria.findAll: IDs en el mapa: " + eventosMap.keySet()); // Log
             return new ArrayList<>(eventosMap.values());
         } finally {
             lock.readLock().unlock();
@@ -136,12 +141,18 @@ public class EventoDAOImplMemoria implements EventoDAO {
         lock.writeLock().lock();
         try {
             if (evento == null) {
+                System.out.println("EventoDAOImplMemoria.save: Intento de guardar evento nulo."); // Log
                 throw new IllegalArgumentException("El evento no puede ser nulo.");
             }
             if (evento.getId() == null || evento.getId().trim().isEmpty()) {
-                evento.setId(UUID.randomUUID().toString()); // Asignar ID si es nuevo
+                String newId = UUID.randomUUID().toString();
+                evento.setId(newId);
+                System.out.println("EventoDAOImplMemoria.save: Asignado nuevo ID: " + newId + " a evento: " + evento.getNombre()); // Log
+            } else {
+                System.out.println("EventoDAOImplMemoria.save: Guardando evento existente con ID: " + evento.getId() + " Nombre: " + evento.getNombre()); // Log
             }
             eventosMap.put(evento.getId(), evento);
+            System.out.println("EventoDAOImplMemoria.save: Evento '" + evento.getNombre() + "' guardado. Total de eventos en mapa: " + eventosMap.size()); // Log
             return evento;
         } finally {
             lock.writeLock().unlock();
