@@ -84,9 +84,11 @@ public class ProcesoCompraFacade {
         String idTransaccionApp = UUID.randomUUID().toString(); // ID único para esta operación de compra en nuestra app
         ProcesadorPago.ResultadoPago resultadoPago = procesadorPago.procesarPago(usuario, totalAPagar, detallesPago, idTransaccionApp);
         boolean pagoExitoso = resultadoPago.isExito();
-        // Opcionalmente, guardar resultadoPago.getIdTransaccionPasarela() en la Compra:
-        // if(pagoExitoso) { nuevaCompra.setIdTransaccionPasarela(resultadoPago.getIdTransaccionPasarela()); }
 
+        if(pagoExitoso && resultadoPago.getIdTransaccionPasarela() != null) { // GUARDAR ID DE TRANSACCIÓN DE PASARELA
+            nuevaCompra.setIdTransaccionPasarela(resultadoPago.getIdTransaccionPasarela());
+            System.out.println("ProcesoCompraFacade: ID de transacción de pasarela ("+ resultadoPago.getIdTransaccionPasarela() +") guardado en la compra.");
+        }
 
         if (!pagoExitoso) {
             System.err.println("ProcesoCompraFacade: Fallo en el procesamiento del pago. Motivo: " + resultadoPago.getMensaje());

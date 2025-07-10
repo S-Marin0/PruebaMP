@@ -1,6 +1,6 @@
 package com.eventmaster.model.entity;
 
-import com.eventmaster.model.pattern.builder.EventoBuilder;
+// ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
 import com.eventmaster.model.pattern.state.EstadoEvento;
 import com.eventmaster.model.pattern.state.EstadoBorrador; // Estado inicial por defecto
 import com.eventmaster.model.pattern.factory.TipoEntrada; // Asumiendo que TipoEntrada es la interfaz/clase base para los tipos de entrada

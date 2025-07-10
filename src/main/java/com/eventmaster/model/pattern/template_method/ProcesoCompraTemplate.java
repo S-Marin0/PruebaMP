@@ -6,7 +6,8 @@ import com.eventmaster.model.entity.Compra;
 import com.eventmaster.model.pattern.factory.TipoEntrada;
 import com.eventmaster.model.pattern.factory.Entrada;
 // Asumimos que los servicios necesarios son inyectados o accesibles
-import com.eventmaster.service.PagoService;
+import com.eventmaster.service.ProcesadorPago; // CAMBIO
+import com.eventmaster.service.ProcesadorPago.ResultadoPago; // CAMBIO
 import com.eventmaster.service.NotificacionService;
 import com.eventmaster.service.EventoService;
 import com.eventmaster.service.UsuarioService;
@@ -19,13 +20,13 @@ import java.util.UUID;
 public abstract class ProcesoCompraTemplate {
 
     // Servicios que podrían ser necesarios para las subclases o el template
-    protected PagoService pagoService;
+    protected ProcesadorPago procesadorPago; // CAMBIO
     protected NotificacionService notificacionService;
     protected EventoService eventoService;
     protected UsuarioService usuarioService;
 
-    public ProcesoCompraTemplate(PagoService pagoService, NotificacionService notificacionService, EventoService eventoService, UsuarioService usuarioService) {
-        this.pagoService = pagoService;
+    public ProcesoCompraTemplate(ProcesadorPago procesadorPago, NotificacionService notificacionService, EventoService eventoService, UsuarioService usuarioService) { // CAMBIO
+        this.procesadorPago = procesadorPago; // CAMBIO
         this.notificacionService = notificacionService;
         this.eventoService = eventoService;
         this.usuarioService = usuarioService;
@@ -67,8 +68,20 @@ public abstract class ProcesoCompraTemplate {
         if (entradasGeneradas == null || entradasGeneradas.isEmpty()) {
             System.err.println("Template Method: Fallo al generar las entradas. Se intentará revertir el pago.");
             // Lógica para revertir el pago (puede ser compleja)
-            pagoService.procesarReembolso(usuario, compra.getId(), compra.getTotalPagado()); // Simulación
-            compra.setEstadoCompra("FALLO_GENERACION_ENTRADAS_PAGO_REVERTIDO");
+            // Necesitamos el ID de transacción de la pasarela que se guardó en la compra.
+            if (compra.getIdTransaccionPasarela() != null && !compra.getIdTransaccionPasarela().isEmpty()) {
+                ResultadoPago resultadoReembolso = procesadorPago.procesarReembolso(compra.getIdTransaccionPasarela(), compra.getTotalPagado());
+                if (resultadoReembolso.isExito()) {
+                    System.out.println("Template Method: Pago revertido exitosamente debido a fallo en generación de entradas.");
+                    compra.setEstadoCompra("FALLO_GENERACION_ENTRADAS_PAGO_REVERTIDO");
+                } else {
+                    System.err.println("Template Method: Fallo al generar entradas Y ADEMÁS fallo al revertir el pago: " + resultadoReembolso.getMensaje());
+                    compra.setEstadoCompra("FALLO_GENERACION_ENTRADAS_PAGO_NO_REVERTIDO");
+                }
+            } else {
+                System.err.println("Template Method: Fallo al generar entradas, pero no se pudo revertir el pago por falta de ID de transacción de pasarela.");
+                compra.setEstadoCompra("FALLO_GENERACION_ENTRADAS_PAGO_NO_REVERTIBLE");
+            }
             return compra;
         }
         entradasGeneradas.forEach(compra::agregarEntrada);
@@ -123,7 +136,17 @@ public abstract class ProcesoCompraTemplate {
      * Este es un paso concreto que usa un servicio.
      */
     protected boolean procesarPago(Compra compra, Map<String, Object> detallesPago) {
-        return pagoService.procesarPago(compra.getUsuario(), compra.getTotalPagado(), detallesPago);
+        String idTransaccionApp = UUID.randomUUID().toString(); // ID para esta operación de pago en nuestra app
+        ResultadoPago resultado = procesadorPago.procesarPago(
+            compra.getUsuario(),
+            compra.getTotalPagado(),
+            detallesPago,
+            idTransaccionApp
+        );
+        if (resultado.isExito() && resultado.getIdTransaccionPasarela() != null) {
+            compra.setIdTransaccionPasarela(resultado.getIdTransaccionPasarela()); // Guardar ID de pasarela
+        }
+        return resultado.isExito();
     }
 
     /**

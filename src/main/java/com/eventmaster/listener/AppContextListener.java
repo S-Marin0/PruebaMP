@@ -11,8 +11,8 @@ import com.eventmaster.model.pattern.factory.EntradaVIPFactory;
 import com.eventmaster.model.pattern.factory.EntradaEarlyAccessFactory;
 import com.eventmaster.model.pattern.strategy.GestorRecomendacionesStrategy;
 import com.eventmaster.model.singleton.SistemaNotificaciones;
-import com.eventmaster.model.pattern.mediator.MediadorConcreto;
-import com.eventmaster.model.pattern.mediator.MediadorCompras;
+// ELIMINAR: import com.eventmaster.model.pattern.mediator.MediadorConcreto;
+// ELIMINAR: import com.eventmaster.model.pattern.mediator.MediadorCompras;
 
 
 import jakarta.servlet.ServletContext;
@@ -104,18 +104,19 @@ public class AppContextListener implements ServletContextListener {
         GestorRecomendacionesStrategy gestorRecomendaciones = new GestorRecomendacionesStrategy(eventoService);
         ctx.setAttribute("gestorRecomendacionesStrategy", gestorRecomendaciones);
 
-        // MediadorConcreto
-        MediadorCompras mediador = new MediadorConcreto();
-        mediador.registrarProcesoCompraFacade(procesoCompraFacade);
-        mediador.registrarGestorRecomendaciones(gestorRecomendaciones);
-        mediador.registrarSistemaNotificaciones(sistemaNotificaciones);
-        // El mediador también podría necesitar EventoService y UsuarioService para algunas operaciones
-        ((MediadorConcreto)mediador).registrarEventoService(eventoService);
-        ((MediadorConcreto)mediador).registrarUsuarioService(usuarioService);
-        // Los usuarios se registrarían dinámicamente en el mediador al iniciar sesión o al ser cargados.
-        ctx.setAttribute("mediadorCompras", mediador);
+        // ELIMINAR BLOQUE DEL MEDIADOR:
+        // // MediadorConcreto
+        // MediadorCompras mediador = new MediadorConcreto();
+        // mediador.registrarProcesoCompraFacade(procesoCompraFacade);
+        // mediador.registrarGestorRecomendaciones(gestorRecomendaciones);
+        // mediador.registrarSistemaNotificaciones(sistemaNotificaciones);
+        // // El mediador también podría necesitar EventoService y UsuarioService para algunas operaciones
+        // ((MediadorConcreto)mediador).registrarEventoService(eventoService);
+        // ((MediadorConcreto)mediador).registrarUsuarioService(usuarioService);
+        // // Los usuarios se registrarían dinámicamente en el mediador al iniciar sesión o al ser cargados.
+        // ctx.setAttribute("mediadorCompras", mediador);
 
-        System.out.println("AppContextListener: Componentes de patrones de diseño inicializados.");
+        System.out.println("AppContextListener: Componentes de patrones de diseño inicializados (Mediador excluido).");
         System.out.println("AppContextListener: Contexto de la aplicación inicializado correctamente.");
     }
 
