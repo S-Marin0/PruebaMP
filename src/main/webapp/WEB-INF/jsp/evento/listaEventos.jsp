@@ -31,7 +31,7 @@
 
             <div class="event-list">
                 <c:choose>
-                    <c:when test="${not empty listaEventos}">
+                    <c:when test="${not empty listaEventosConFecha}">
                         <c:forEach var="eventoMap" items="${listaEventosConFecha}">
                             <c:set var="evento" value="${eventoMap.evento}" />
                             <div class="event-item">
