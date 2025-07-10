@@ -49,23 +49,65 @@
                     </div>
 
                     <hr/>
-                    <h4>Definir un Tipo de Entrada Principal</h4>
+                    <h4>Definir Tipos de Entrada (hasta 3)</h4>
+
+                    <%-- Tipo de Entrada 1 --%>
+                    <h5>Tipo de Entrada 1 (Obligatorio)</h5>
                     <div>
-                        <label for="tipoEntradaNombre">Nombre del Tipo de Entrada:</label>
-                        <input type="text" id="tipoEntradaNombre" name="tipoEntradaNombre" value="${not empty param.tipoEntradaNombre ? param.tipoEntradaNombre : 'General'}" required>
-                        (Ej: General, VIP, Preventa)
+                        <label for="tipoEntradaNombre_1">Nombre del Tipo de Entrada 1:</label>
+                        <input type="text" id="tipoEntradaNombre_1" name="tipoEntradaNombre_1" value="${not empty param.tipoEntradaNombre_1 ? param.tipoEntradaNombre_1 : 'General'}" required>
                     </div>
                     <div>
-                        <label for="tipoEntradaPrecioBase">Precio Base (€):</label>
-                        <input type="number" id="tipoEntradaPrecioBase" name="tipoEntradaPrecioBase" value="${not empty param.tipoEntradaPrecioBase ? param.tipoEntradaPrecioBase : '25.00'}" step="0.01" min="0" required>
+                        <label for="tipoEntradaPrecioBase_1">Precio Base 1 (€):</label>
+                        <input type="number" id="tipoEntradaPrecioBase_1" name="tipoEntradaPrecioBase_1" value="${not empty param.tipoEntradaPrecioBase_1 ? param.tipoEntradaPrecioBase_1 : '25.00'}" step="0.01" min="0" required>
                     </div>
                     <div>
-                        <label for="tipoEntradaCantidadTotal">Cantidad Disponible para este Tipo:</label>
-                        <input type="number" id="tipoEntradaCantidadTotal" name="tipoEntradaCantidadTotal" value="${not empty param.tipoEntradaCantidadTotal ? param.tipoEntradaCantidadTotal : '100'}" min="1" required>
+                        <label for="tipoEntradaCantidadTotal_1">Cantidad Disponible Tipo 1:</label>
+                        <input type="number" id="tipoEntradaCantidadTotal_1" name="tipoEntradaCantidadTotal_1" value="${not empty param.tipoEntradaCantidadTotal_1 ? param.tipoEntradaCantidadTotal_1 : '100'}" min="1" required>
                     </div>
                      <div>
-                        <label for="tipoEntradaLimiteCompra">Límite de Compra por Usuario (para este tipo):</label>
-                        <input type="number" id="tipoEntradaLimiteCompra" name="tipoEntradaLimiteCompra" value="${not empty param.tipoEntradaLimiteCompra ? param.tipoEntradaLimiteCompra : '10'}" min="1" required>
+                        <label for="tipoEntradaLimiteCompra_1">Límite Compra Usuario Tipo 1:</label>
+                        <input type="number" id="tipoEntradaLimiteCompra_1" name="tipoEntradaLimiteCompra_1" value="${not empty param.tipoEntradaLimiteCompra_1 ? param.tipoEntradaLimiteCompra_1 : '10'}" min="1" required>
+                    </div>
+                    <br/>
+
+                    <%-- Tipo de Entrada 2 (Opcional) --%>
+                    <h5>Tipo de Entrada 2 (Opcional)</h5>
+                    <div>
+                        <label for="tipoEntradaNombre_2">Nombre del Tipo de Entrada 2:</label>
+                        <input type="text" id="tipoEntradaNombre_2" name="tipoEntradaNombre_2" value="${param.tipoEntradaNombre_2}">
+                    </div>
+                    <div>
+                        <label for="tipoEntradaPrecioBase_2">Precio Base 2 (€):</label>
+                        <input type="number" id="tipoEntradaPrecioBase_2" name="tipoEntradaPrecioBase_2" value="${param.tipoEntradaPrecioBase_2}" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label for="tipoEntradaCantidadTotal_2">Cantidad Disponible Tipo 2:</label>
+                        <input type="number" id="tipoEntradaCantidadTotal_2" name="tipoEntradaCantidadTotal_2" value="${param.tipoEntradaCantidadTotal_2}" min="0">
+                    </div>
+                     <div>
+                        <label for="tipoEntradaLimiteCompra_2">Límite Compra Usuario Tipo 2:</label>
+                        <input type="number" id="tipoEntradaLimiteCompra_2" name="tipoEntradaLimiteCompra_2" value="${param.tipoEntradaLimiteCompra_2}" min="0">
+                    </div>
+                    <br/>
+
+                    <%-- Tipo de Entrada 3 (Opcional) --%>
+                    <h5>Tipo de Entrada 3 (Opcional)</h5>
+                    <div>
+                        <label for="tipoEntradaNombre_3">Nombre del Tipo de Entrada 3:</label>
+                        <input type="text" id="tipoEntradaNombre_3" name="tipoEntradaNombre_3" value="${param.tipoEntradaNombre_3}">
+                    </div>
+                    <div>
+                        <label for="tipoEntradaPrecioBase_3">Precio Base 3 (€):</label>
+                        <input type="number" id="tipoEntradaPrecioBase_3" name="tipoEntradaPrecioBase_3" value="${param.tipoEntradaPrecioBase_3}" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label for="tipoEntradaCantidadTotal_3">Cantidad Disponible Tipo 3:</label>
+                        <input type="number" id="tipoEntradaCantidadTotal_3" name="tipoEntradaCantidadTotal_3" value="${param.tipoEntradaCantidadTotal_3}" min="0">
+                    </div>
+                     <div>
+                        <label for="tipoEntradaLimiteCompra_3">Límite Compra Usuario Tipo 3:</label>
+                        <input type="number" id="tipoEntradaLimiteCompra_3" name="tipoEntradaLimiteCompra_3" value="${param.tipoEntradaLimiteCompra_3}" min="0">
                     </div>
                     <hr/>
 
