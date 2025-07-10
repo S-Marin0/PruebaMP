@@ -52,16 +52,16 @@ public class AppContextListener implements ServletContextListener {
         // 2. Inicializar Servicios (con sus dependencias DAO)
         EventoService eventoService = new EventoService(eventoDAO, tipoEntradaDAO);
         UsuarioService usuarioService = new UsuarioService(usuarioDAO, compraDAO);
-        // PagoService es una clase concreta por ahora, podría ser interfaz y tener impl.
-        PagoServiceImpl pagoService = new PagoServiceImpl(); // O ProcesadorPago pagoService = new PagoServiceImpl();
+        // Instanciar PagoServiceImpl y referenciarlo mediante la interfaz ProcesadorPago
+        ProcesadorPago procesadorPago = new PagoServiceImpl();
         NotificacionService notificacionServiceStub = new NotificacionService(); // Stub
         ControlAccesoService controlAccesoService = new ControlAccesoService(); // Stub/Simple
-        ProcesadorReembolso procesadorReembolso = new ProcesadorReembolso(pagoService, eventoService, notificacionServiceStub);
-
+        // Asegurarse que ProcesadorReembolso espera un ProcesadorPago
+        ProcesadorReembolso procesadorReembolso = new ProcesadorReembolso(procesadorPago, eventoService, notificacionServiceStub);
 
         ctx.setAttribute("eventoService", eventoService);
         ctx.setAttribute("usuarioService", usuarioService);
-        ctx.setAttribute("pagoService", pagoService);
+        ctx.setAttribute("procesadorPago", procesadorPago); // Guardar bajo la interfaz
         ctx.setAttribute("notificacionService", notificacionServiceStub);
         ctx.setAttribute("controlAccesoService", controlAccesoService);
         ctx.setAttribute("procesadorReembolso", procesadorReembolso);
@@ -90,7 +90,7 @@ public class AppContextListener implements ServletContextListener {
             validarDisponibilidad, // inicio de la cadena
             eventoService,
             usuarioService,
-            pagoService, // Usando la instancia de PagoServiceImpl como ProcesadorPago
+            procesadorPago, // Usar la instancia de ProcesadorPago
             notificacionServiceStub, // Usando el stub
             entradaFactories
         );

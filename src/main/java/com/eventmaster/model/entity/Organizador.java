@@ -1,6 +1,8 @@
 package com.eventmaster.model.entity;
 
-import com.eventmaster.model.pattern.builder.EventoBuilder;
+// CAMBIO: Importar Evento para poder referenciar Evento.EventoBuilder
+import com.eventmaster.model.entity.Evento;
+// ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class Organizador extends Usuario {
     }
 
     // Métodos específicos del Organizador
-    public Evento crearEvento(EventoBuilder builder) {
+    public Evento crearEvento(Evento.EventoBuilder builder) { // CAMBIO: Usar Evento.EventoBuilder
         // El builder ya debería tener seteado el organizador
         // Aquí se podría añadir lógica adicional si es necesario antes de construir
         Evento evento = builder.build();
@@ -40,16 +42,20 @@ public class Organizador extends Usuario {
         return evento;
     }
 
-    public void editarEvento(Evento evento, EventoBuilder builder) {
+    public void editarEvento(Evento evento, Evento.EventoBuilder builder) { // CAMBIO: Usar Evento.EventoBuilder
         // Lógica para editar un evento existente usando un builder
         // Esto es conceptual, la implementación real podría variar
         if (eventosCreados.contains(evento)) {
             // Actualizar los campos del evento original con los del builder
-            evento.setNombre(builder.getNombre());
-            evento.setDescripcion(builder.getDescripcion());
-            evento.setFecha(builder.getFecha());
-            evento.setLugar(builder.getLugar());
-            // ... y así sucesivamente para otros campos editables
+            // Asumiendo que EventoBuilder tiene getters para todos estos campos
+            if(builder.getNombre() != null) evento.setNombre(builder.getNombre());
+            if(builder.getDescripcion() != null) evento.setDescripcion(builder.getDescripcion());
+            if(builder.getFechaHora() != null) evento.setFechaHora(builder.getFechaHora()); // Corregido a getFechaHora
+            if(builder.getLugar() != null) evento.setLugar(builder.getLugar());
+            if(builder.getCategoria() != null) evento.setCategoria(builder.getCategoria());
+            if(builder.getCapacidadTotal() > 0) evento.setCapacidadTotal(builder.getCapacidadTotal());
+            // Para imágenes, videos, tipos de entrada, la actualización sería más compleja
+            // y podría implicar limpiar listas y añadir nuevos elementos del builder.
             System.out.println("Evento " + evento.getNombre() + " editado.");
         } else {
             System.out.println("Error: El evento no pertenece a este organizador.");

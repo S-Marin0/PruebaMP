@@ -1,5 +1,7 @@
 package com.eventmaster.model.pattern.factory;
 
+import com.eventmaster.model.entity.Evento; // IMPORTACIÓN AÑADIDA
+
 // Interfaz base para todas las entradas (Componente para Decorator)
 public interface Entrada {
     double getPrecio();

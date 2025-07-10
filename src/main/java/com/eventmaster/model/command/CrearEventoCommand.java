@@ -1,26 +1,26 @@
 package com.eventmaster.model.command;
 
-import com.eventmaster.model.entity.Evento;
+import com.eventmaster.model.entity.Evento; // Ya estaba, pero es crucial para Evento.EventoBuilder
 import com.eventmaster.model.entity.Organizador;
-import com.eventmaster.model.pattern.builder.EventoBuilder; // Asumo que EventoBuilder está en este paquete
-import com.eventmaster.service.EventoService; // Servicio para manejar la lógica de persistencia o notificación
+// ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
+import com.eventmaster.service.EventoService;
 
 import java.time.LocalDateTime;
 
 public class CrearEventoCommand implements Command {
     private Organizador organizador;
-    private EventoBuilder eventoBuilder;
-    private Evento eventoCreado; // Para poder deshacer la creación si es necesario
-    private EventoService eventoService; // Opcional, para interacciones más complejas
+    private Evento.EventoBuilder eventoBuilder; // CAMBIO
+    private Evento eventoCreado;
+    private EventoService eventoService;
     private LocalDateTime tiempoEjecucion;
 
-    public CrearEventoCommand(Organizador organizador, EventoBuilder eventoBuilder, EventoService eventoService) {
+    public CrearEventoCommand(Organizador organizador, Evento.EventoBuilder eventoBuilder, EventoService eventoService) { // CAMBIO
         this.organizador = organizador;
         this.eventoBuilder = eventoBuilder;
-        this.eventoService = eventoService; // Puede ser null si no se usa
+        this.eventoService = eventoService;
     }
 
-    public CrearEventoCommand(Organizador organizador, EventoBuilder eventoBuilder) {
+    public CrearEventoCommand(Organizador organizador, Evento.EventoBuilder eventoBuilder) { // CAMBIO
         this(organizador, eventoBuilder, null);
     }
 

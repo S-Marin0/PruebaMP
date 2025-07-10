@@ -2,7 +2,7 @@ package com.eventmaster.model.command;
 
 import com.eventmaster.model.entity.Compra;
 import com.eventmaster.model.entity.Usuario;
-import com.eventmaster.service.PagoService;
+import com.eventmaster.service.ProcesadorReembolso; // CAMBIO
 import com.eventmaster.service.NotificacionService;
 // Asumimos que la devolución de entradas al stock se maneja si la compra se cancela completamente.
 // Si es un reembolso parcial, las entradas podrían no devolverse.
@@ -15,20 +15,21 @@ public class ReembolsarCompraCommand implements Command {
     private double montoReembolso; // Puede ser total o parcial
     private String motivoReembolso;
 
-    private PagoService pagoService;
+    private ProcesadorReembolso procesadorReembolso; // CAMBIO
     private NotificacionService notificacionService; // Para notificar al usuario
     private LocalDateTime tiempoEjecucion;
 
     private String estadoOriginalCompra; // Para el undo
     private double montoOriginalPagado; // Para el undo
+    // private String idTransaccionReembolsoPasarela; // Para el undo, si fuera posible
 
     public ReembolsarCompraCommand(Compra compraAReembolsar, Usuario usuarioQueSolicita, double montoReembolso, String motivoReembolso,
-                                   PagoService pagoService, NotificacionService notificacionService) {
+                                   ProcesadorReembolso procesadorReembolso, NotificacionService notificacionService) { // CAMBIO
         this.compraAReembolsar = compraAReembolsar;
         this.usuarioQueSolicita = usuarioQueSolicita;
         this.montoReembolso = montoReembolso;
         this.motivoReembolso = motivoReembolso;
-        this.pagoService = pagoService;
+        this.procesadorReembolso = procesadorReembolso; // CAMBIO
         this.notificacionService = notificacionService;
     }
 
@@ -57,37 +58,34 @@ public class ReembolsarCompraCommand implements Command {
         this.estadoOriginalCompra = compraAReembolsar.getEstadoCompra();
         this.montoOriginalPagado = compraAReembolsar.getTotalPagado();
 
+        // ASUNCIÓN: compraAReembolsar tiene un método getIdTransaccionPasarela()
+        String idTransaccionOriginalPasarela = compraAReembolsar.getIdTransaccionPasarela();
+        if (idTransaccionOriginalPasarela == null || idTransaccionOriginalPasarela.trim().isEmpty()) {
+            System.err.println("Comando ReembolsarCompra: No se puede procesar reembolso, falta ID de transacción de pasarela original en la compra ID: " + compraAReembolsar.getId());
+            return false;
+        }
 
-        boolean reembolsoExitoso = pagoService.procesarReembolso(
-            compraAReembolsar.getUsuario(),
-            compraAReembolsar.getId(),
-            montoReembolso
+        boolean reembolsoExitoso = procesadorReembolso.procesarSolicitudReembolso(
+            compraAReembolsar,
+            montoReembolso,
+            motivoReembolso,
+            idTransaccionOriginalPasarela
         );
 
         if (reembolsoExitoso) {
-            // Actualizar estado de la compra
-            if (montoReembolso == compraAReembolsar.getTotalPagado()) {
-                compraAReembolsar.setEstadoCompra("REEMBOLSADA_TOTAL");
-                // Si es reembolso total, se podrían devolver las entradas al stock (similar a CancelarCompraCommand)
-                // Aquí se omitiría esa lógica para no duplicar con CancelarCompraCommand,
-                // asumiendo que un reembolso total implica una cancelación previa o simultánea.
-            } else {
-                compraAReembolsar.setEstadoCompra("REEMBOLSADA_PARCIAL");
-                // Actualizar el total pagado reflejando el reembolso parcial
-                // compraAReembolsar.setTotalPagado(compraAReembolsar.getTotalPagado() - montoReembolso); NO, el total pagado original no cambia.
-                // Se podría tener un campo "montoReembolsado" en Compra.
-            }
-
-            System.out.println("Comando ReembolsarCompra: Reembolso de " + montoReembolso + " procesado para compra ID " + compraAReembolsar.getId());
-
-            if (notificacionService != null) {
-                // notificacionService.notificarReembolsoProcesado(compraAReembolsar.getUsuario(), compraAReembolsar, montoReembolso, motivoReembolso);
-                System.out.println("Comando ReembolsarCompra: Notificación de reembolso enviada (simulada).");
-            }
-            compraAReembolsar.agregarOperacionAlHistorial(this);
-            return true;
+            // El estado de la compra ya se actualiza dentro de procesadorReembolso.procesarSolicitudReembolso
+            // y las notificaciones también se podrían manejar allí o aquí.
+            // Si procesarSolicitudReembolso ya hace la notificación, no es necesario aquí.
+            // if (notificacionService != null) {
+            //     // La notificación específica del resultado (monto final, etc.) es mejor desde ProcesadorReembolso
+            //     System.out.println("Comando ReembolsarCompra: Notificación de reembolso gestionada por ProcesadorReembolso.");
+            // }
+            compraAReembolsar.agregarOperacionAlHistorial(this); // El comando se registra a sí mismo
+            System.out.println("Comando ReembolsarCompra: Solicitud de reembolso para compra ID " + compraAReembolsar.getId() + " procesada con resultado: " + (reembolsoExitoso ? "Éxito" : "Fallo"));
+            return true; // El comando se ejecutó, el resultado del reembolso está en el estado de la compra
         } else {
-            System.err.println("Comando ReembolsarCompra: Fallo al procesar el reembolso a través del servicio de pago.");
+            System.err.println("Comando ReembolsarCompra: Fallo al procesar la solicitud de reembolso a través de ProcesadorReembolso para compra ID " + compraAReembolsar.getId());
+            // El estado de la compra podría haberse quedado como FALLO_REEMBOLSO por ProcesadorReembolso
             return false;
         }
     }

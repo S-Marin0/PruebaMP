@@ -1,9 +1,9 @@
 package com.eventmaster.controller;
 
-import com.eventmaster.model.entity.Evento;
+import com.eventmaster.model.entity.Evento; // Asegurar que esté presente
 import com.eventmaster.model.entity.Organizador; // Para creación/edición
 import com.eventmaster.model.entity.Usuario;
-import com.eventmaster.model.pattern.builder.EventoBuilder;
+// ELIMINAR: import com.eventmaster.model.pattern.builder.EventoBuilder;
 import com.eventmaster.service.EventoService;
 import com.eventmaster.service.LugarService; // Para obtener lugares al crear/editar
 import com.eventmaster.service.UsuarioService; // Para obtener organizador de sesión
@@ -225,28 +225,17 @@ public class EventoServlet extends HttpServlet {
             com.eventmaster.model.entity.Lugar lugarSimulado = new com.eventmaster.model.entity.Lugar("lugarTemp123", "Lugar de Prueba", "Dirección de Prueba");
             lugarSimulado.agregar(new com.eventmaster.model.entity.Asiento("A1")); // Para que tenga capacidad > 0
 
-
-            EventoBuilder builder = new EventoBuilder(nombre, organizador, lugarSimulado, fechaHora)
+            // CAMBIO: Usar Evento.EventoBuilder
+            Evento.EventoBuilder builder = new Evento.EventoBuilder(nombre, organizador, lugarSimulado, fechaHora)
                 .setDescripcion(descripcion)
                 .setCategoria(categoria)
                 .setCapacidadTotal(capacidad > 0 ? capacidad : lugarSimulado.obtenerCapacidadTotal());
 
             // Aquí se podrían añadir Tipos de Entrada desde el formulario
-            // Ejemplo: builder.addTipoEntrada("General", new TipoEntrada("General", 25.00, 100, 5));
+            // Ejemplo: builder.addTipoEntrada("General", new com.eventmaster.model.pattern.factory.TipoEntrada("General", 25.00, 100, 5));
 
-            Evento nuevoEvento = eventoService.registrarNuevoEvento(builder.build()); // El builder.build() es llamado dentro.
-                                                                                // O el servicio toma el builder.
-                                                                                // Aquí asumimos que registrarNuevoEvento toma el Evento ya construido.
-                                                                                // Corrijo: El servicio debería tomar el evento construido.
-            // El evento se construye con el builder y luego se pasa al servicio.
-            // Evento eventoConstruido = builder.build();
-            // Evento nuevoEvento = eventoService.registrarNuevoEvento(eventoConstruido);
-            // La lógica del EventoService ya se encarga de llamar a eventoDAO.save(eventoConstruido)
-            // y tipoEntradaDAO.save(...)
-            // Por ahora, para simplificar, asumimos que el builder se pasa y el servicio lo construye y guarda.
-            // Esto es menos ideal. Lo correcto es:
-            Evento eventoParaGuardar = builder.build();
-            Evento eventoGuardado = eventoService.registrarNuevoEvento(eventoParaGuardar);
+            Evento eventoParaGuardar = builder.build(); // Construir el evento primero
+            Evento eventoGuardado = eventoService.registrarNuevoEvento(eventoParaGuardar); // Luego pasarlo al servicio
 
 
             System.out.println("EventoServlet: Evento creado con ID: " + eventoGuardado.getId());

@@ -9,7 +9,7 @@ import com.eventmaster.model.pattern.factory.TipoEntradaFactory;
 import com.eventmaster.model.pattern.chain_of_responsibility.ValidacionHandler;
 import com.eventmaster.service.EventoService;
 import com.eventmaster.service.UsuarioService; // Asumiendo un servicio de usuario para actualizar historial
-import com.eventmaster.service.PagoService; // Para procesar el pago
+import com.eventmaster.service.ProcesadorPago; // CAMBIO: Interfaz en lugar de clase concreta PagoService
 import com.eventmaster.service.NotificacionService; // Para enviar notificaciones
 
 import java.util.List;
@@ -21,20 +21,20 @@ public class ProcesoCompraFacade {
     private ValidacionHandler cadenaValidacion; // Inicio de la cadena de responsabilidad
     private EventoService eventoService;
     private UsuarioService usuarioService;
-    private PagoService pagoService;
+    private ProcesadorPago procesadorPago; // CAMBIO: Tipo de campo
     private NotificacionService notificacionService;
     private Map<String, TipoEntradaFactory> entradaFactories; // Para crear diferentes tipos de entrada
 
     public ProcesoCompraFacade(ValidacionHandler cadenaValidacion,
                                EventoService eventoService,
                                UsuarioService usuarioService,
-                               PagoService pagoService,
+                               ProcesadorPago procesadorPago, // CAMBIO: Tipo de parámetro
                                NotificacionService notificacionService,
                                Map<String, TipoEntradaFactory> entradaFactories) {
         this.cadenaValidacion = cadenaValidacion;
         this.eventoService = eventoService;
         this.usuarioService = usuarioService;
-        this.pagoService = pagoService;
+        this.procesadorPago = procesadorPago; // CAMBIO: Asignación
         this.notificacionService = notificacionService;
         this.entradaFactories = entradaFactories;
     }
@@ -81,9 +81,15 @@ public class ProcesoCompraFacade {
         System.out.println("ProcesoCompraFacade: Precio total calculado: " + totalAPagar);
 
         // 4. Procesar Pago
-        boolean pagoExitoso = pagoService.procesarPago(usuario, totalAPagar, detallesPago);
+        String idTransaccionApp = UUID.randomUUID().toString(); // ID único para esta operación de compra en nuestra app
+        ProcesadorPago.ResultadoPago resultadoPago = procesadorPago.procesarPago(usuario, totalAPagar, detallesPago, idTransaccionApp);
+        boolean pagoExitoso = resultadoPago.isExito();
+        // Opcionalmente, guardar resultadoPago.getIdTransaccionPasarela() en la Compra:
+        // if(pagoExitoso) { nuevaCompra.setIdTransaccionPasarela(resultadoPago.getIdTransaccionPasarela()); }
+
+
         if (!pagoExitoso) {
-            System.err.println("ProcesoCompraFacade: Fallo en el procesamiento del pago.");
+            System.err.println("ProcesoCompraFacade: Fallo en el procesamiento del pago. Motivo: " + resultadoPago.getMensaje());
             nuevaCompra.setEstadoCompra("PAGO_FALLIDO");
             // Considerar si se debe notificar al usuario aquí
             return null;

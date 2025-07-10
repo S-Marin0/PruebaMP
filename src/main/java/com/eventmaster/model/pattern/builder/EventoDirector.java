@@ -1,17 +1,19 @@
 package com.eventmaster.model.pattern.builder;
 
+// CAMBIO: Asegurar importación de Evento
 import com.eventmaster.model.entity.Evento;
 import com.eventmaster.model.entity.Lugar;
 import com.eventmaster.model.entity.Organizador;
-import com.eventmaster.model.pattern.factory.TipoEntrada; // Asumiendo que esta es la clase/interfaz base para TipoEntrada
-import com.eventmaster.model.pattern.factory.TipoEntradaFactory; // Interfaz de fábrica de entradas
-import com.eventmaster.model.pattern.factory.EntradaGeneralFactory; // Fábrica concreta
-import com.eventmaster.model.pattern.factory.EntradaVIPFactory; // Fábrica concreta
+import com.eventmaster.model.pattern.factory.TipoEntrada;
+// No necesitamos las fábricas de TipoEntrada aquí, solo la definición de TipoEntrada
+// ELIMINAR: import com.eventmaster.model.pattern.factory.TipoEntradaFactory;
+// ELIMINAR: import com.eventmaster.model.pattern.factory.EntradaGeneralFactory;
+// ELIMINAR: import com.eventmaster.model.pattern.factory.EntradaVIPFactory;
 
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+// ELIMINAR: import java.util.HashMap; (No usado directamente)
+// ELIMINAR: import java.util.Map; (No usado directamente)
 
 // Clase Director (Opcional) para construir tipos comunes de Eventos.
 // No es estrictamente necesario si el cliente usa el Builder directamente,
@@ -20,12 +22,14 @@ public class EventoDirector {
 
     // Ejemplo de cómo podría usarse un director para un tipo específico de evento.
     // El builder se pasa como argumento.
+    // El tipo de 'builder' ya estaba correcto como Evento.EventoBuilder en la implementación anterior.
     public void construirEventoConciertoRock(Evento.EventoBuilder builder, String nombre, Organizador organizador, Lugar lugar, LocalDateTime fechaHora) {
         builder
             .setNombre(nombre)
-            // .setOrganizador(organizador) // El builder ya lo recibe en su constructor
-            // .setLugar(lugar)             // El builder ya lo recibe en su constructor
-            // .setFechaHora(fechaHora)     // El builder ya lo recibe en su constructor
+            // Los siguientes ya están implícitos en el constructor del builder que recibe EventoDirector
+            // .setOrganizador(organizador)
+            // .setLugar(lugar)
+            // .setFechaHora(fechaHora)
             .setCategoria("Concierto de Rock")
             .setDescripcion("¡Prepárate para una noche de rock inolvidable!")
             .addImagenUrl("default_rock_concert_image.jpg")

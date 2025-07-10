@@ -129,7 +129,7 @@ public class Asistente extends Usuario implements Observer { // Implementar Obse
     public void actualizar(Evento evento, String mensaje) {
         // Verificar configuración de notificaciones del asistente
         if (evento == null) { // Notificación general del sistema
-            if (configuracionNotificaciones.isRecibirNotificacionesNuevosEventos()) { // Asumimos que las generales son para nuevos eventos importantes
+            if (configuracionNotificaciones.isRecibirNotificacionesNuevosEventosImportantes()) { // CAMBIO AQUÍ
                  recibirNotificacion("Notificación General del Sistema: " + mensaje);
             }
         } else { // Notificación específica de un evento
@@ -137,7 +137,7 @@ public class Asistente extends Usuario implements Observer { // Implementar Obse
             // o si es un cambio a un evento al que ya compró entradas.
             boolean esEventoComprado = getHistorialCompras().stream().anyMatch(c -> c.getEvento().getId().equals(evento.getId()) && "COMPLETADA".equals(c.getEstadoCompra()));
 
-            if (esEventoComprado && configuracionNotificaciones.isRecibirNotificacionesCambiosEvento()) {
+            if (esEventoComprado && configuracionNotificaciones.isRecibirNotificacionesCambiosEventoComprado()) { // Asumiendo que este es el campo correcto para cambios
                  recibirNotificacion("Actualización sobre el evento '" + evento.getNombre() + "': " + mensaje);
             } else if (!esEventoComprado && configuracionNotificaciones.isRecibirRecomendacionesPersonalizadas() && mensaje.toLowerCase().contains("nuevo") /*o similar*/) {
                 // Si es un nuevo evento y el usuario quiere recomendaciones, podría ser relevante.
