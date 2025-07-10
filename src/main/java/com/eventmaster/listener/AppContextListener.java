@@ -92,7 +92,8 @@ public class AppContextListener implements ServletContextListener {
             usuarioService,
             procesadorPago, // Usar la instancia de ProcesadorPago
             notificacionServiceStub, // Usando el stub
-            entradaFactories
+            entradaFactories,
+            compraDAO // Pasar la instancia de CompraDAO
         );
         ctx.setAttribute("procesoCompraFacade", procesoCompraFacade);
 

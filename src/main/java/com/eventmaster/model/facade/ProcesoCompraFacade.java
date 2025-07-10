@@ -186,11 +186,15 @@ public class ProcesoCompraFacade {
         evento.venderEntradas(tipoEntradaNombre, cantidad); // Este método ya actualiza tipoEntradaDef internamente
         eventoService.actualizarEvento(evento); // Guardar cambios en el evento (entradasVendidas)
 
-        // 6. Confirmar Compra
+        // 6. Confirmar y Guardar Compra
         nuevaCompra.setEstadoCompra("COMPLETADA");
         nuevaCompra.setFechaCompra(java.time.LocalDateTime.now()); // Actualizar fecha a la de confirmación
-        usuarioService.agregarCompraAlHistorial(usuario, nuevaCompra);
-        System.out.println("ProcesoCompraFacade: Compra ID " + nuevaCompra.getId() + " completada y registrada.");
+
+        this.compraDAO.save(nuevaCompra); // Guardar la compra en el DAO
+        System.out.println("ProcesoCompraFacade: Compra ID " + nuevaCompra.getId() + " guardada en CompraDAO.");
+
+        usuarioService.agregarCompraAlHistorial(usuario, nuevaCompra); // Esto actualiza el objeto Usuario en memoria
+        System.out.println("ProcesoCompraFacade: Compra ID " + nuevaCompra.getId() + " procesada para historial de usuario.");
 
         // 7. Notificar al Usuario
         notificacionService.enviarConfirmacionCompra(usuario, nuevaCompra);
