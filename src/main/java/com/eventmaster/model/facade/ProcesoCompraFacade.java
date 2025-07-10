@@ -25,19 +25,22 @@ public class ProcesoCompraFacade {
     private ProcesadorPago procesadorPago; // CAMBIO: Tipo de campo
     private NotificacionService notificacionService;
     private Map<String, TipoEntradaFactory> entradaFactories; // Para crear diferentes tipos de entrada
+    private com.eventmaster.dao.CompraDAO compraDAO; // Añadido para persistencia de compras
 
     public ProcesoCompraFacade(ValidacionHandler cadenaValidacion,
                                EventoService eventoService,
                                UsuarioService usuarioService,
                                ProcesadorPago procesadorPago, // CAMBIO: Tipo de parámetro
                                NotificacionService notificacionService,
-                               Map<String, TipoEntradaFactory> entradaFactories) {
+                               Map<String, TipoEntradaFactory> entradaFactories,
+                               com.eventmaster.dao.CompraDAO compraDAO) { // Añadido CompraDAO
         this.cadenaValidacion = cadenaValidacion;
         this.eventoService = eventoService;
         this.usuarioService = usuarioService;
         this.procesadorPago = procesadorPago; // CAMBIO: Asignación
         this.notificacionService = notificacionService;
         this.entradaFactories = entradaFactories;
+        this.compraDAO = compraDAO; // Asignar CompraDAO
     }
 
     /**
