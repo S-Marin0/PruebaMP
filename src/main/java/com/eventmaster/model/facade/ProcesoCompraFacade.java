@@ -15,6 +15,7 @@ import com.eventmaster.service.NotificacionService; // Para enviar notificacione
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap; // Importación añadida
 import java.util.UUID;
 
 public class ProcesoCompraFacade {

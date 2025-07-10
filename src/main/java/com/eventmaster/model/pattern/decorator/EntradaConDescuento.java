@@ -4,34 +4,40 @@ import com.eventmaster.model.pattern.factory.Entrada;
 
 // Decorador Concreto
 public class EntradaConDescuento extends EntradaDecorator {
-    private double porcentajeDescuento; // Ej: 0.10 para 10% de descuento
-    private String motivoDescuento;
+    private double montoDescuento; // Monto fijo a descontar
+    private String descripcionDescuento;
 
-    public EntradaConDescuento(Entrada entradaDecorada, double porcentajeDescuento, String motivoDescuento) {
+    public EntradaConDescuento(Entrada entradaDecorada, String descripcionDescuento, double montoDescuento) {
         super(entradaDecorada);
-        if (porcentajeDescuento < 0 || porcentajeDescuento > 1) {
-            throw new IllegalArgumentException("El porcentaje de descuento debe estar entre 0 y 1.");
+        if (montoDescuento < 0) {
+            // Opcionalmente, permitir descuentos negativos si eso tuviera sentido (ej. una tarifa)
+            // Por ahora, asumimos que un descuento siempre reduce o mantiene el precio.
+            // O podría ser que un montoDescuento negativo sea un cargo, pero el nombre "Descuento" no encaja.
+            // Mejor asegurar que el monto sea positivo o cero.
+            throw new IllegalArgumentException("El monto del descuento no puede ser negativo.");
         }
-        this.porcentajeDescuento = porcentajeDescuento;
-        this.motivoDescuento = motivoDescuento;
+        this.montoDescuento = montoDescuento;
+        this.descripcionDescuento = descripcionDescuento;
     }
 
     @Override
     public double getPrecio() {
         double precioOriginal = super.getPrecio();
-        return precioOriginal * (1 - porcentajeDescuento);
+        double precioConDescuento = precioOriginal - this.montoDescuento;
+        return Math.max(0, precioConDescuento); // Asegurar que el precio no sea negativo
     }
 
     @Override
     public String getDescripcion() {
-        return super.getDescripcion() + " (Descuento Aplicado: " + (porcentajeDescuento * 100) + "% por " + motivoDescuento + ")";
+        // Usar java.text.NumberFormat para formatear el monto como moneda podría ser mejor aquí.
+        return super.getDescripcion() + " (Descuento: " + this.descripcionDescuento + " -€" + String.format("%.2f", this.montoDescuento) + ")";
     }
 
-    public double getPorcentajeDescuento() {
-        return porcentajeDescuento;
+    public double getMontoDescuento() {
+        return montoDescuento;
     }
 
-    public String getMotivoDescuento() {
-        return motivoDescuento;
+    public String getDescripcionDescuento() { // Cambiado de getMotivoDescuento
+        return descripcionDescuento;
     }
 }
