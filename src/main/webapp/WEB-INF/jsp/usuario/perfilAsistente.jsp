@@ -8,8 +8,8 @@
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
-    <jsp:include page="/WEB-INF/jsp/common/header.jsp" />
-    <jsp:include page="/WEB-INF/jsp/common/navigation.jsp" />
+    <jsp:include page="/jsp/common/header.jsp" />
+    <jsp:include page="/jsp/common/navigation.jsp" />
 
     <div class="container">
         <h2>Perfil de Asistente: ${usuario.nombre}</h2>
@@ -51,7 +51,7 @@
             <%-- Aquí iría un formulario para editar configuración de notificaciones --%>
 
             <h3>Historial de Compras</h3>
-            <jsp:include page="/WEB-INF/jsp/compra/misEntradas.jsp">
+            <jsp:include page="/jsp/compra/misEntradas.jsp">
                  <jsp:param name="showHeader" value="false"/> <%-- No mostrar título si se incluye --%>
             </jsp:include>
 
@@ -64,6 +64,6 @@
 
     </div>
 
-    <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+    <jsp:include page="/jsp/common/footer.jsp" />
 </body>
 </html>
