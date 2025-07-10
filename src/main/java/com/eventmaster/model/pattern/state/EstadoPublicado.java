@@ -29,13 +29,13 @@ public class EstadoPublicado implements EstadoEvento {
             System.out.println("Evento '" + evento.getNombre() + "' iniciado.");
             evento.setEstadoActual(new EstadoEnCurso(evento));
         } else {
-            System.out.println("No se puede iniciar el evento '" + evento.getNombre() + "' antes de su fecha y hora programada.");
+            throw new IllegalStateException("No se puede iniciar el evento '" + evento.getNombre() + "' antes de su fecha y hora programada.");
         }
     }
 
     @Override
     public void finalizar() {
-        System.out.println("No se puede finalizar un evento que solo está publicado y no ha iniciado.");
+        throw new IllegalStateException("No se puede finalizar un evento que solo está publicado y no ha iniciado.");
     }
 
     @Override

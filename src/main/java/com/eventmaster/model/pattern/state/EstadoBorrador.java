@@ -25,12 +25,12 @@ public class EstadoBorrador implements EstadoEvento {
 
     @Override
     public void iniciar() {
-        System.out.println("No se puede iniciar un evento que está en estado borrador. Primero debe publicarse.");
+        throw new IllegalStateException("No se puede iniciar un evento que está en estado borrador. Primero debe publicarse.");
     }
 
     @Override
     public void finalizar() {
-        System.out.println("No se puede finalizar un evento que está en estado borrador.");
+        throw new IllegalStateException("No se puede finalizar un evento que está en estado borrador.");
     }
 
     @Override

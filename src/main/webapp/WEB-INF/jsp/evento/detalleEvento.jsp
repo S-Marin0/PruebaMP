@@ -128,6 +128,48 @@
                         <input type="hidden" name="eventoId" value="${evento.id}">
                         <button type="submit">Eliminar Evento</button>
                     </form>
+
+                    <%-- Formularios para Cambiar Estado --%>
+                    <c:set var="estadoActualNombre" value="${evento.estadoActual.nombreEstado.toLowerCase()}" />
+
+                    <c:if test="${estadoActualNombre == 'borrador'}">
+                        <form action="${pageContext.request.contextPath}/evento/cambiarEstado" method="post" style="display:inline;">
+                            <input type="hidden" name="eventoId" value="${evento.id}">
+                            <input type="hidden" name="accion" value="publicar">
+                            <button type="submit">Publicar Evento</button>
+                        </form>
+                    </c:if>
+
+                    <c:if test="${estadoActualNombre == 'publicado'}">
+                        <form action="${pageContext.request.contextPath}/evento/cambiarEstado" method="post" style="display:inline;">
+                            <input type="hidden" name="eventoId" value="${evento.id}">
+                            <input type="hidden" name="accion" value="cancelar">
+                            <button type="submit" class="button-danger">Cancelar Evento</button>
+                        </form>
+                        <form action="${pageContext.request.contextPath}/evento/cambiarEstado" method="post" style="display:inline;">
+                            <input type="hidden" name="eventoId" value="${evento.id}">
+                            <input type="hidden" name="accion" value="iniciar">
+                            <button type="submit">Iniciar Evento (Poner En Curso)</button>
+                        </form>
+                    </c:if>
+
+                    <c:if test="${estadoActualNombre == 'en curso'}">
+                         <form action="${pageContext.request.contextPath}/evento/cambiarEstado" method="post" style="display:inline;">
+                            <input type="hidden" name="eventoId" value="${evento.id}">
+                            <input type="hidden" name="accion" value="cancelar">
+                            <button type="submit" class="button-danger">Cancelar Evento</button>
+                        </form>
+                        <form action="${pageContext.request.contextPath}/evento/cambiarEstado" method="post" style="display:inline;">
+                            <input type="hidden" name="eventoId" value="${evento.id}">
+                            <input type="hidden" name="accion" value="finalizar">
+                            <button type="submit">Finalizar Evento</button>
+                        </form>
+                    </c:if>
+                     <%-- Para eventos Cancelados o Finalizados, usualmente no hay más acciones de estado manuales comunes --%>
+                     <c:if test="${estadoActualNombre == 'cancelado' || estadoActualNombre == 'finalizado'}">
+                        <p><em>Este evento está ${evento.estadoActual.nombreEstado} y no se pueden realizar más cambios de estado manuales.</em></p>
+                    </c:if>
+
                 </c:if>
 
 

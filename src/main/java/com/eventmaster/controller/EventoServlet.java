@@ -124,6 +124,9 @@ public class EventoServlet extends HttpServlet {
                 case "/eliminar":
                     procesarEliminarEvento(request, response);
                     break;
+                case "/cambiarEstado": // Nueva acción
+                    procesarCambioEstado(request, response);
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Acción POST desconocida: " + action);
                     break;
@@ -488,4 +491,82 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
         }
     }
 
+    private void procesarCambioEstado(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String eventoId = request.getParameter("eventoId");
+        String accionEstado = request.getParameter("accion"); // ej. "publicar", "cancelar"
+
+        HttpSession session = request.getSession(false);
+        Usuario usuarioLogueado = (session != null) ? (Usuario) session.getAttribute("usuarioLogueado") : null;
+
+        if (!(usuarioLogueado instanceof Organizador)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso denegado. Debe ser organizador.");
+            return;
+        }
+        Organizador organizador = (Organizador) usuarioLogueado;
+
+        if (eventoId == null || eventoId.trim().isEmpty() || accionEstado == null || accionEstado.trim().isEmpty()) {
+            request.setAttribute("errorGeneral", "ID de evento o acción de estado no proporcionados.");
+            // Considerar redirigir a una página más específica si es posible, o a la lista de eventos.
+            request.getRequestDispatcher("/jsp/error.jsp").forward(request, response);
+            return;
+        }
+
+        Optional<Evento> eventoOpt = eventoService.findEventoById(eventoId);
+        if (!eventoOpt.isPresent()) {
+            response.sendRedirect(request.getContextPath() + "/eventos?error=Evento no encontrado con ID: " + eventoId);
+            return;
+        }
+
+        Evento evento = eventoOpt.get();
+
+        if (!evento.getOrganizador().getId().equals(organizador.getId())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "No tiene permiso para cambiar el estado de este evento.");
+            return;
+        }
+
+        String mensajeExito = "";
+        String mensajeError = "";
+
+        try {
+            String estadoAnterior = evento.getEstadoActual().getNombreEstado();
+            switch (accionEstado) {
+                case "publicar":
+                    evento.publicar();
+                    mensajeExito = "Evento publicado exitosamente.";
+                    break;
+                case "cancelar":
+                    evento.cancelar();
+                    mensajeExito = "Evento cancelado exitosamente.";
+                    break;
+                case "iniciar":
+                    evento.iniciar();
+                     mensajeExito = "Evento iniciado exitosamente.";
+                    break;
+                case "finalizar":
+                    evento.finalizar();
+                    mensajeExito = "Evento finalizado exitosamente.";
+                    break;
+                default:
+                    mensajeError = "Acción de estado desconocida: " + accionEstado;
+                    break;
+            }
+
+            if (mensajeError.isEmpty()) {
+                eventoService.actualizarEvento(evento); // Guardar el cambio de estado
+                System.out.println("EventoServlet: Estado del evento ID " + eventoId + " cambiado de '" + estadoAnterior + "' a '" + evento.getEstadoActual().getNombreEstado() + "' por acción '" + accionEstado + "'.");
+                response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&mensaje=" + java.net.URLEncoder.encode(mensajeExito, "UTF-8"));
+            } else {
+                response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&error=" + java.net.URLEncoder.encode(mensajeError, "UTF-8"));
+            }
+
+        } catch (IllegalStateException e) { // Captura errores de transiciones de estado inválidas
+            System.err.println("EventoServlet: Transición de estado inválida para evento ID " + eventoId + ", acción " + accionEstado + " - " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&error=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        } catch (Exception e) {
+            System.err.println("EventoServlet: Error general al cambiar estado del evento ID " + eventoId + " - " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&error=" + java.net.URLEncoder.encode("Error inesperado al cambiar el estado.", "UTF-8"));
+        }
+    }
 }
