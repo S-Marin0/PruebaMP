@@ -217,11 +217,35 @@ public class CompraServlet extends HttpServlet {
             return;
         }
 
-        request.setAttribute("evento", eventoOpt.get());
+        Evento eventoParaConfirmar = eventoOpt.get();
+        System.out.println("CompraServlet#mostrarPaginaConfirmacion: Evento para confirmar: " + eventoParaConfirmar); // Asume toString() útil en Evento
+        System.out.println("CompraServlet#mostrarPaginaConfirmacion: evento.getFechaHora(): " + eventoParaConfirmar.getFechaHora());
+        System.out.println("CompraServlet#mostrarPaginaConfirmacion: evento.getLugar(): " + eventoParaConfirmar.getLugar());
+        if (eventoParaConfirmar.getLugar() != null) {
+             System.out.println("CompraServlet#mostrarPaginaConfirmacion: evento.getLugar().getNombre(): " + eventoParaConfirmar.getLugar().getNombre());
+        }
+
+
+        request.setAttribute("evento", eventoParaConfirmar);
         request.setAttribute("tipoEntradaNombre", tipoEntradaNombre);
         request.setAttribute("cantidad", cantidad);
-        request.setAttribute("precioUnitario", precioUnitario);
-        request.setAttribute("totalProvisional", precioUnitario * cantidad);
+        request.setAttribute("precioUnitario", precioUnitario); // Este es el precio base del TipoEntrada
+
+        // Calcular el total provisional con decoradores para mostrar en la página de confirmación
+        double precioUnitarioConDecoradores = precioUnitario;
+        Boolean aplicarMercancia = (Boolean) session.getAttribute("compraEnProgresoDecoradorMercancia");
+        Boolean aplicarDescuento = (Boolean) session.getAttribute("compraEnProgresoDecoradorDescuento");
+
+        if (aplicarMercancia != null && aplicarMercancia && eventoParaConfirmar.getTiposEntradaDisponibles().get(tipoEntradaNombre).isOfreceMercanciaOpcional()) {
+            precioUnitarioConDecoradores += eventoParaConfirmar.getTiposEntradaDisponibles().get(tipoEntradaNombre).getPrecioAdicionalMercancia();
+        }
+        if (aplicarDescuento != null && aplicarDescuento && eventoParaConfirmar.getTiposEntradaDisponibles().get(tipoEntradaNombre).isOfreceDescuentoOpcional()) {
+            precioUnitarioConDecoradores -= eventoParaConfirmar.getTiposEntradaDisponibles().get(tipoEntradaNombre).getMontoDescuentoFijo();
+        }
+        if (precioUnitarioConDecoradores < 0) precioUnitarioConDecoradores = 0;
+
+        request.setAttribute("totalProvisional", precioUnitarioConDecoradores * cantidad);
+
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/confirmarCompra.jsp");
         dispatcher.forward(request, response);
