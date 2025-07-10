@@ -213,10 +213,10 @@
 
     <script>
         function actualizarOpcionesDecoradorYPrecio() {
+            console.log('--- actualizarOpcionesDecoradorYPrecio INVOCADA ---');
             const tipoEntradaSelect = document.getElementById('tipoEntradaNombre');
             const selectedOption = tipoEntradaSelect.options[tipoEntradaSelect.selectedIndex];
             const cantidadInput = document.getElementById('cantidad');
-            const cantidad = parseInt(cantidadInput.value) || 0;
 
             const opcionMercanciaDiv = document.getElementById('opcionMercanciaDiv');
             const checkMercancia = document.getElementById('checkMercancia');
@@ -229,56 +229,91 @@
             const precioTotalEstimadoSpan = document.getElementById('precioTotalEstimado');
             const botonComprar = document.getElementById('botonComprar');
 
+            // Inicializar/resetear estado
+            opcionMercanciaDiv.style.display = 'none';
+            checkMercancia.checked = false;
+            opcionDescuentoDiv.style.display = 'none';
+            checkDescuento.checked = false;
+
+            let cantidad = parseInt(cantidadInput.value);
+            if (isNaN(cantidad) || cantidad < 1) {
+                cantidad = 1; // Default a 1 si es inválido o no numérico
+            }
+            console.log('Valor de tipoEntradaSelect:', tipoEntradaSelect.value, '| Cantidad parseada:', cantidad);
+
             if (!selectedOption || selectedOption.value === "") {
-                opcionMercanciaDiv.style.display = 'none';
-                checkMercancia.checked = false;
-                opcionDescuentoDiv.style.display = 'none';
-                checkDescuento.checked = false;
+                console.log('No hay opción seleccionada o valor vacío. Estado reseteado.');
                 precioTotalEstimadoSpan.textContent = '€0.00';
                 if (botonComprar) botonComprar.disabled = true;
+                console.log('--- FIN actualizarOpcionesDecoradorYPrecio (sin selección) ---');
                 return;
             }
+
             if (botonComprar) botonComprar.disabled = false;
 
+            console.log('Dataset de la opción seleccionada:', JSON.stringify(selectedOption.dataset));
 
             const precioBase = parseFloat(selectedOption.dataset.precioBase) || 0;
+            console.log('Parsed precioBase:', precioBase, '(raw data-precio-base:', selectedOption.dataset.precioBase, ')');
+
             const ofreceMercancia = selectedOption.dataset.ofreceMercancia === 'true';
+            console.log('Parsed ofreceMercancia:', ofreceMercancia, '(raw data-ofrece-mercancia:', selectedOption.dataset.ofreceMercancia, ')');
             const descMercancia = selectedOption.dataset.descMercancia || 'Mercancía Adicional';
             const precioMercancia = parseFloat(selectedOption.dataset.precioMercancia) || 0;
+            console.log('Parsed descMercancia:', descMercancia, '(raw data-desc-mercancia:', selectedOption.dataset.descMercancia, ')');
+            console.log('Parsed precioMercancia:', precioMercancia, '(raw data-precio-mercancia:', selectedOption.dataset.precioMercancia, ')');
+
             const ofreceDescuento = selectedOption.dataset.ofreceDescuento === 'true';
+            console.log('Parsed ofreceDescuento:', ofreceDescuento, '(raw data-ofrece-descuento:', selectedOption.dataset.ofreceDescuento, ')');
             const descDescuento = selectedOption.dataset.descDescuento || 'Descuento Aplicado';
             const montoDescuento = parseFloat(selectedOption.dataset.montoDescuento) || 0;
+            console.log('Parsed descDescuento:', descDescuento, '(raw data-desc-descuento:', selectedOption.dataset.descDescuento, ')');
+            console.log('Parsed montoDescuento:', montoDescuento, '(raw data-monto-descuento:', selectedOption.dataset.montoDescuento, ')');
 
-            let precioCalculado = precioBase;
+            let precioCalculadoPorUnidad = precioBase;
+            console.log('Precio calculado inicial por unidad (base):', precioCalculadoPorUnidad);
 
             if (ofreceMercancia && precioMercancia > 0) {
                 opcionMercanciaDiv.style.display = 'block';
                 labelMercancia.textContent = `${descMercancia} (+€${precioMercancia.toFixed(2)})`;
+                console.log('Opción Mercancía MOSTRADA. Label:', labelMercancia.textContent);
                 if (checkMercancia.checked) {
-                    precioCalculado += precioMercancia;
+                    precioCalculadoPorUnidad += precioMercancia;
+                    console.log('Mercancía CHECKED. Precio por unidad con mercancía:', precioCalculadoPorUnidad);
                 }
             } else {
-                opcionMercanciaDiv.style.display = 'none';
-                checkMercancia.checked = false;
+                // Ya está oculto por el reseteo inicial
+                console.log('Opción Mercancía NO APLICA o precio es 0.');
             }
 
             if (ofreceDescuento && montoDescuento > 0) {
                 opcionDescuentoDiv.style.display = 'block';
                 labelDescuento.textContent = `${descDescuento} (-€${montoDescuento.toFixed(2)})`;
+                console.log('Opción Descuento MOSTRADA. Label:', labelDescuento.textContent);
                 if (checkDescuento.checked) {
-                    precioCalculado -= montoDescuento;
+                    precioCalculadoPorUnidad -= montoDescuento;
+                    console.log('Descuento CHECKED. Precio por unidad con descuento:', precioCalculadoPorUnidad);
                 }
             } else {
-                opcionDescuentoDiv.style.display = 'none';
-                checkDescuento.checked = false;
+                // Ya está oculto por el reseteo inicial
+                console.log('Opción Descuento NO APLICA o monto es 0.');
             }
 
-            if (precioCalculado < 0) { // Un descuento no debería hacer el precio negativo
-                precioCalculado = 0;
+            if (precioCalculadoPorUnidad < 0) {
+                precioCalculadoPorUnidad = 0;
+                console.log('Precio por unidad era negativo, ajustado a 0.');
             }
 
-            const precioTotal = precioCalculado * cantidad;
-            precioTotalEstimadoSpan.textContent = `€${precioTotal.toFixed(2)}`;
+            const precioTotalFinal = precioCalculadoPorUnidad * cantidad;
+            console.log('Precio calculado final por unidad:', precioCalculadoPorUnidad, '| Cantidad:', cantidad, '| Precio Total FINAL:', precioTotalFinal);
+
+            if (isNaN(precioTotalFinal)) {
+                precioTotalEstimadoSpan.textContent = ''; // Poner vacío si es NaN
+                console.error('ERROR: precioTotalFinal es NaN! Verifique los valores de data-* y el parseo.');
+            } else {
+                precioTotalEstimadoSpan.textContent = `€${precioTotalFinal.toFixed(2)}`;
+            }
+            console.log('--- FIN actualizarOpcionesDecoradorYPrecio ---');
         }
 
         // Llamar una vez al cargar la página para inicializar (en caso de que haya algo preseleccionado o para deshabilitar botón)
