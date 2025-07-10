@@ -87,7 +87,7 @@ public class CompraServlet extends HttpServlet {
         } catch (Exception e) {
             System.err.println("CompraServlet: Error en doGet - " + e.getMessage());
             request.setAttribute("errorGeneral", "Error procesando la solicitud de compra: " + e.getMessage());
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/error.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
             dispatcher.forward(request, response);
         }
     }
@@ -137,7 +137,7 @@ public class CompraServlet extends HttpServlet {
              if(eventoId != null) {
                 response.sendRedirect(request.getContextPath() + "/evento/detalle?id=" + eventoId + "&errorCompra=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
              } else {
-                RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/error.jsp");
+                RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
                 dispatcher.forward(request, response);
              }
         }
@@ -192,7 +192,7 @@ public class CompraServlet extends HttpServlet {
 
         if (eventoId == null || tipoEntradaNombre == null || cantidad == null || precioUnitario == null) {
             request.setAttribute("errorGeneral", "No hay una compra en progreso o los datos están incompletos.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/error.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
             dispatcher.forward(request, response);
             return;
         }
@@ -200,7 +200,7 @@ public class CompraServlet extends HttpServlet {
         Optional<Evento> eventoOpt = eventoService.findEventoById(eventoId);
         if(!eventoOpt.isPresent()){
             request.setAttribute("errorGeneral", "El evento para la compra ya no está disponible.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/error.jsp");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/error.jsp");
             dispatcher.forward(request, response);
             return;
         }
@@ -211,7 +211,7 @@ public class CompraServlet extends HttpServlet {
         request.setAttribute("precioUnitario", precioUnitario);
         request.setAttribute("totalProvisional", precioUnitario * cantidad);
 
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/compra/confirmarCompra.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/confirmarCompra.jsp");
         dispatcher.forward(request, response);
     }
 
@@ -273,7 +273,7 @@ public class CompraServlet extends HttpServlet {
 
         request.setAttribute("compraId", compraId); // Simplificado: solo pasamos el ID
         request.setAttribute("mensajeExito", "¡Tu compra ha sido realizada con éxito!");
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/compra/compraExitosa.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/compraExitosa.jsp");
         dispatcher.forward(request, response);
     }
 
@@ -285,7 +285,7 @@ public class CompraServlet extends HttpServlet {
         // request.setAttribute("listaMisCompras", misCompras);
         // El Asistente ya tiene su historial de compras cargado por UsuarioService
         request.setAttribute("listaMisCompras", asistente.getHistorialCompras());
-        RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/jsp/compra/misEntradas.jsp");
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/misEntradas.jsp");
         dispatcher.forward(request, response);
     }
 
