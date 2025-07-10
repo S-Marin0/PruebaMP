@@ -8,8 +8,8 @@
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
-    <jsp:include page="/WEB-INF/jsp/common/header.jsp" />
-    <jsp:include page="/WEB-INF/jsp/common/navigation.jsp" />
+    <jsp:include page="/jsp/common/header.jsp" />
+    <jsp:include page="/jsp/common/navigation.jsp" />
 
     <div class="container">
         <h2>Perfil de Organizador: ${usuario.nombre}</h2>
@@ -69,6 +69,6 @@
         </c:if>
     </div>
 
-    <jsp:include page="/WEB-INF/jsp/common/footer.jsp" />
+    <jsp:include page="/jsp/common/footer.jsp" />
 </body>
 </html>
