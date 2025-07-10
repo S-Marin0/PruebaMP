@@ -29,7 +29,12 @@
         <c:if test="${not empty evento && not empty tipoEntradaNombre && not empty cantidad && not empty precioUnitario}">
             <h3>Resumen del Pedido:</h3>
             <p><strong>Evento:</strong> ${evento.nombre}</p>
-            <p><strong>Fecha:</strong> <fmt:formatDate value="${evento.fechaHora}" type="BOTH" dateStyle="medium" timeStyle="short"/></p>
+            <c:if test="${not empty fechaHoraDelEventoParaFormatear}">
+                <p><strong>Fecha:</strong> <fmt:formatDate value="${fechaHoraDelEventoParaFormatear}" type="BOTH" dateStyle="medium" timeStyle="short"/></p>
+            </c:if>
+            <c:if test="${empty fechaHoraDelEventoParaFormatear && not empty evento.fechaHora}">
+                 <p><strong>Fecha:</strong> <c:out value="${evento.fechaHora}"/> (Error al formatear, mostrando valor crudo)</p>
+            </c:if>
             <p><strong>Lugar:</strong> ${evento.lugar.nombre}</p>
             <hr/>
             <p><strong>Tipo de Entrada:</strong> ${tipoEntradaNombre}</p>

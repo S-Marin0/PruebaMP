@@ -246,6 +246,15 @@ public class CompraServlet extends HttpServlet {
 
         request.setAttribute("totalProvisional", precioUnitarioConDecoradores * cantidad);
 
+        // Convertir LocalDateTime a java.util.Date para JSTL fmt:formatDate
+        if (eventoParaConfirmar.getFechaHora() != null) {
+            java.util.Date fechaUtilParaJsp = java.util.Date.from(
+                eventoParaConfirmar.getFechaHora().atZone(java.time.ZoneId.systemDefault()).toInstant()
+            );
+            request.setAttribute("fechaHoraDelEventoParaFormatear", fechaUtilParaJsp);
+        } else {
+            request.setAttribute("fechaHoraDelEventoParaFormatear", null);
+        }
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("/jsp/compra/confirmarCompra.jsp");
         dispatcher.forward(request, response);
