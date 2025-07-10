@@ -67,7 +67,7 @@
     <!-- Página de Bienvenida (lo que se sirve en la raíz si HomeServlet no estuviera mapeado a "/") -->
     <!-- En nuestro caso, HomeServlet ya maneja la raíz, pero es bueno tenerlo -->
     <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file> <%-- O index.html, o la URL que maneje HomeServlet --%>
+        <welcome-file>jsp/index.jsp</welcome-file> <%-- O index.html, o la URL que maneje HomeServlet --%>
     </welcome-file-list>
 
     <!-- Configuración de Páginas de Error (opcional, pero recomendado) -->

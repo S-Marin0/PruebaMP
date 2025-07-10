@@ -337,7 +337,7 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
             request.setAttribute("fechaHoraInput", evento.getFechaHora().format(inputFormatter));
         }
 
-        request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+        request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
     }
 
     private void procesarEditarEvento(HttpServletRequest request, HttpServletResponse response)
@@ -392,7 +392,7 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                     DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
                     request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
                 }
-                request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+                request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
                 return;
             }
             LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr);
@@ -419,7 +419,7 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
                 request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
             }
-            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             request.setAttribute("errorEditarEvento", "Capacidad debe ser un número.");
             request.setAttribute("evento", eventoAEditar); // Reenviar datos originales
@@ -427,7 +427,7 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
                 request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
             }
-            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             request.setAttribute("errorEditarEvento", "Error al actualizar evento: " + e.getMessage());
             request.setAttribute("evento", eventoAEditar); // Reenviar datos originales
@@ -435,7 +435,7 @@ private void verDetalleEvento(HttpServletRequest request, HttpServletResponse re
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
                 request.setAttribute("fechaHoraInput", eventoAEditar.getFechaHora().format(inputFormatter));
             }
-            request.getRequestDispatcher("/WEB-INF/jsp/evento/editarEventoForm.jsp").forward(request, response);
+            request.getRequestDispatcher("/jsp/evento/editarEventoForm.jsp").forward(request, response);
         }
     }
 
