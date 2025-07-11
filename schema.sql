@@ -152,21 +152,3 @@ CREATE INDEX idx_entrada_vendida_compra ON entrada_vendida(compra_id);
 CREATE INDEX idx_promocion_fechas ON promocion(fecha_inicio, fecha_fin);
 CREATE INDEX idx_codigo_descuento_activo_fecha ON codigo_descuento(activo, fecha_expiracion);
 
-/*
-Notas sobre el esquema:
-1.  IDs: VARCHAR(255) is used for UUIDs. If using auto-increment integers, change type to INT AUTO_INCREMENT.
-2.  Password Hashing: `usuario.password` MUST store hashed passwords.
-3.  Complex Fields in Lugar: `tipos_eventos_admitidos` and `reservas_por_franja` are TEXT placeholders.
-    A normalized approach with separate tables is generally better for querying and integrity.
-    The Composite pattern for Lugar (subcomponentes) is also not fully represented here; it would likely need
-    an adjacency list or nested set model if sub-Lugar components are also stored in the `lugar` table
-    or a separate `lugar_componente` table.
-4.  `entrada_vendida.tipo_entrada_definicion_id`: Commented out, but would be a good FK to link a sold ticket
-    back to its definition, rather than just relying on `tipo_entrada_nombre`.
-5.  `compra.evento_id`: This is somewhat denormalized if a Compra is primarily a collection of Entradas from the
-    same Evento. It's kept for simplicity as per the Compra model.
-6.  Cascade/Restrict: FK constraints use ON DELETE RESTRICT or ON DELETE SET NULL/CASCADE based on common scenarios.
-    Review these based on specific business rules (e.g., what happens if an Evento is deleted?).
-7.  Timestamps: DATETIME is used. Consider TIMESTAMP if UTC storage and automatic timezone conversion are desired.
-8.  Precision for DECIMAL: Adjust precision (10,2) or (5,4) as needed for monetary values and percentages.
-*/
