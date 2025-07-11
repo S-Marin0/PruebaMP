@@ -1,8 +1,9 @@
 package com.eventmaster.listener;
 
 import com.eventmaster.dao.*;
-import com.eventmaster.dao.impl.memoria.*;
+import com.eventmaster.dao.impl.mysql.*; // Changed from com.eventmaster.dao.impl.memoria.*
 import com.eventmaster.service.*;
+import com.eventmaster.util.DatabaseManager; // Added DatabaseManager import
 import com.eventmaster.model.facade.ProcesoCompraFacade;
 import com.eventmaster.model.pattern.chain_of_responsibility.*;
 import com.eventmaster.model.pattern.factory.TipoEntradaFactory;
@@ -31,15 +32,57 @@ public class AppContextListener implements ServletContextListener {
         ServletContext ctx = sce.getServletContext();
         System.out.println("AppContextListener: Inicializando contexto de la aplicación...");
 
-        // 1. Inicializar DAOs (En Memoria)
-        UsuarioDAO usuarioDAO = new UsuarioDAOImplMemoria();
-        EventoDAO eventoDAO = new EventoDAOImplMemoria();
-        LugarDAO lugarDAO = new LugarDAOImplMemoria();
-        TipoEntradaDAO tipoEntradaDAO = new TipoEntradaDAOImplMemoria();
-        EntradaDAO entradaDAO = new EntradaDAOImplMemoria(); // No usado directamente por servicios refactorizados, pero podría ser útil
-        CompraDAO compraDAO = new CompraDAOImplMemoria();
-        PromocionDAO promocionDAO = new PromocionDAOImplMemoria(); // No usado directamente aún, pero listo
-        CodigoDescuentoDAO codigoDescuentoDAO = new CodigoDescuentoDAOImplMemoria(); // Idem
+        // Initialize DatabaseManager
+        // No need to store DatabaseManager in servlet context as it's a static utility class.
+        // However, you might want to perform an initial connection test here if desired.
+        try {
+            DatabaseManager.getConnection().close(); // Test connection
+            System.out.println("AppContextListener: Database connection test successful.");
+        } catch (Exception e) {
+            System.err.println("AppContextListener: Failed to connect to the database during initialization.");
+            // Depending on the application's requirements, you might want to throw a RuntimeException
+            // to prevent the application from starting if the DB is not available.
+            // throw new RuntimeException("Failed to initialize database connection", e);
+        }
+
+
+        // 1. Inicializar DAOs (MySQL)
+        // These DAOs use DatabaseManager.getConnection() internally and don't require it in constructor.
+        UsuarioDAO usuarioDAO = new UsuarioDAOImplMySQL();
+        LugarDAO lugarDAO = new LugarDAOImplMySQL();
+        // TipoEntradaDAO tipoEntradaDAO = new TipoEntradaDAOImplMySQL(); // To be created
+        // EntradaDAO entradaDAO = new EntradaDAOImplMySQL(); // To be created
+        // CompraDAO compraDAO = new CompraDAOImplMySQL(); // To be created
+        // PromocionDAO promocionDAO = new PromocionDAOImplMySQL(); // To be created
+        // CodigoDescuentoDAO codigoDescuentoDAO = new CodigoDescuentoDAOImplMySQL(); // To be created
+
+        // EventoDAOImplMySQL requires LugarDAO and UsuarioDAO for fetching related entities
+        EventoDAOImplMySQL eventoDAOImplMySQL = new EventoDAOImplMySQL();
+        eventoDAOImplMySQL.setLugarDAO(lugarDAO); // Inject LugarDAO
+        eventoDAOImplMySQL.setUsuarioDAO(usuarioDAO); // Inject UsuarioDAO
+        EventoDAO eventoDAO = eventoDAOImplMySQL;
+
+
+        // Initialize other DAOs (placeholder for now, will be MySQL implementations)
+        // These will be replaced with actual MySQL implementations as they are created.
+        TipoEntradaDAO tipoEntradaDAO = new TipoEntradaDAOImplMySQL(); // Changed from Memoria
+
+        EntradaDAOImplMySQL entradaDAOImplMySQL = new EntradaDAOImplMySQL();
+        entradaDAOImplMySQL.setEventoDAO(eventoDAO); // Inject EventoDAO into EntradaDAO
+        EntradaDAO entradaDAO = entradaDAOImplMySQL; // Changed from Memoria
+
+        CompraDAOImplMySQL compraDAOImplMySQL = new CompraDAOImplMySQL();
+        compraDAOImplMySQL.setUsuarioDAO(usuarioDAO); // Inject UsuarioDAO
+        compraDAOImplMySQL.setEventoDAO(eventoDAO);   // Inject EventoDAO
+        // If CompraDAO needed EntradaDAO to populate List<Entrada>, it would be injected here too.
+        CompraDAO compraDAO = compraDAOImplMySQL; // Changed from Memoria
+
+        PromocionDAO promocionDAO = new PromocionDAOImplMySQL(); // Changed from Memoria
+
+        CodigoDescuentoDAOImplMySQL codigoDescuentoDAOImplMySQL = new CodigoDescuentoDAOImplMySQL();
+        codigoDescuentoDAOImplMySQL.setPromocionDAO(promocionDAO); // Inject PromocionDAO
+        CodigoDescuentoDAO codigoDescuentoDAO = codigoDescuentoDAOImplMySQL; // Changed from Memoria
+
 
         ctx.setAttribute("usuarioDAO", usuarioDAO);
         ctx.setAttribute("eventoDAO", eventoDAO);
